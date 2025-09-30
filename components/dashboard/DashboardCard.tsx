@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReactNode } from "react";
+import DashboardCardSkeleton from "./skeleton/DashboardCardSkeleton";
 
 interface DashboardCardProps {
   title: string;
@@ -7,6 +8,7 @@ interface DashboardCardProps {
   children: ReactNode;
   action?: ReactNode;
   className?: string;
+  isLoading?: boolean;
 }
 
 export default function DashboardCard({
@@ -15,7 +17,12 @@ export default function DashboardCard({
   children,
   action,
   className = "",
+  isLoading = false,
 }: DashboardCardProps) {
+  if (isLoading) {
+    return <DashboardCardSkeleton />;
+  }
+
   return (
     <Card
       className={`hover:shadow-md transition-shadow duration-200 ${className}`}

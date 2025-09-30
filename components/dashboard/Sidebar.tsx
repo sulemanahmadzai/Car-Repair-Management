@@ -13,6 +13,7 @@ import {
   Briefcase,
   DollarSign,
   Mail,
+  Wrench,
 } from "lucide-react";
 
 interface MenuItem {
@@ -37,6 +38,11 @@ const menuItems: MenuItem[] = [
     title: "Customers",
     href: "/dashboard/customers",
     icon: <Users className="w-5 h-5" />,
+  },
+  {
+    title: "Service Records",
+    href: "/dashboard/service-records",
+    icon: <Wrench className="w-5 h-5" />,
   },
   {
     title: "Security",

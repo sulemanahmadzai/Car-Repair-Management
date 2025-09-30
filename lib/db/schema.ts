@@ -5,6 +5,7 @@ import {
   text,
   timestamp,
   integer,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -90,11 +91,31 @@ export const customers = pgTable("customers", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const serviceRecords = pgTable("service_records", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .notNull()
+    .references(() => teams.id),
+  vehicleReg: varchar("vehicle_reg", { length: 20 }).notNull(),
+  serviceType: varchar("service_type", { length: 50 }).notNull(),
+  mileage: integer("mileage"),
+  labourHours: integer("labour_hours"),
+  partsUsed: jsonb("parts_used").$type<string[]>(),
+  notes: text("notes"),
+  mediaFiles:
+    jsonb("media_files").$type<{ url: string; type: string; name: string }[]>(),
+  status: varchar("status", { length: 20 }).notNull().default("completed"),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
   invitations: many(invitations),
   customers: many(customers),
+  serviceRecords: many(serviceRecords),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -142,6 +163,17 @@ export const customersRelations = relations(customers, ({ one }) => ({
   }),
 }));
 
+export const serviceRecordsRelations = relations(serviceRecords, ({ one }) => ({
+  team: one(teams, {
+    fields: [serviceRecords.teamId],
+    references: [teams.id],
+  }),
+  creator: one(users, {
+    fields: [serviceRecords.createdBy],
+    references: [users.id],
+  }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
@@ -154,6 +186,8 @@ export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
 export type Customer = typeof customers.$inferSelect;
 export type NewCustomer = typeof customers.$inferInsert;
+export type ServiceRecord = typeof serviceRecords.$inferSelect;
+export type NewServiceRecord = typeof serviceRecords.$inferInsert;
 export type TeamDataWithMembers = Team & {
   teamMembers: (TeamMember & {
     user: Pick<User, "id" | "name" | "email">;

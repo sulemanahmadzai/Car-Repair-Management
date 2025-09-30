@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
+import DashboardLoader from "@/components/dashboard/DashboardLoader";
 
 export default function DashboardLayout({
   children,
@@ -11,6 +12,7 @@ export default function DashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [userData, setUserData] = useState<{
     name?: string;
     email?: string;
@@ -30,28 +32,19 @@ export default function DashboardLayout({
         }
       } catch (error) {
         console.error("Failed to fetch user data:", error);
+      } finally {
+        // Simulate initial loading time like the main project
+        setTimeout(() => {
+          setIsInitialLoading(false);
+        }, 1000);
       }
     };
 
     fetchUser();
   }, []);
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          user={userData || undefined}
-        />
-        <div className="lg:pl-64">
-          <DashboardHeader onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-          <main className="p-6 bg-gray-50">
-            <div className="max-w-7xl mx-auto">{children}</div>
-          </main>
-        </div>
-      </div>
-    );
+  if (!mounted || isInitialLoading) {
+    return <DashboardLoader />;
   }
 
   return (

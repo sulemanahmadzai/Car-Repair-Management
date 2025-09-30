@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState, useEffect } from "react";
 import useSWR from "swr";
 import {
   Users,
@@ -281,6 +281,17 @@ function InviteTeamMember() {
 }
 
 export default function DashboardPage() {
+  const [isLoading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate loading time like the main project
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500); // 1.5 seconds loading time
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -300,6 +311,7 @@ export default function DashboardPage() {
           icon={DollarSign}
           color="primary"
           trend={{ value: "+12.5%", isPositive: true }}
+          isLoading={isLoading}
         />
         <StatsCard
           title="Total Customers"
@@ -308,6 +320,7 @@ export default function DashboardPage() {
           icon={Users}
           color="secondary"
           trend={{ value: "+8.2%", isPositive: true }}
+          isLoading={isLoading}
         />
         <StatsCard
           title="Total Orders"
@@ -316,6 +329,7 @@ export default function DashboardPage() {
           icon={ShoppingCart}
           color="success"
           trend={{ value: "+24.1%", isPositive: true }}
+          isLoading={isLoading}
         />
         <StatsCard
           title="Conversion Rate"
@@ -324,6 +338,7 @@ export default function DashboardPage() {
           icon={TrendingUp}
           color="warning"
           trend={{ value: "-2.4%", isPositive: false }}
+          isLoading={isLoading}
         />
       </div>
 
@@ -334,6 +349,7 @@ export default function DashboardPage() {
           title="Revenue Updates"
           subtitle="Overview of latest month"
           className="lg:col-span-2"
+          isLoading={isLoading}
         >
           <div className="h-64 flex items-center justify-center bg-[hsl(var(--grey-100))] rounded-lg">
             <p className="text-muted-foreground">Chart Placeholder</p>
@@ -341,7 +357,11 @@ export default function DashboardPage() {
         </DashboardCard>
 
         {/* Yearly Breakup */}
-        <DashboardCard title="Yearly Breakup" subtitle="Total revenue">
+        <DashboardCard
+          title="Yearly Breakup"
+          subtitle="Total revenue"
+          isLoading={isLoading}
+        >
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
@@ -378,7 +398,11 @@ export default function DashboardPage() {
         </DashboardCard>
 
         {/* Monthly Earnings */}
-        <DashboardCard title="Monthly Earnings" subtitle="Total monthly profit">
+        <DashboardCard
+          title="Monthly Earnings"
+          subtitle="Total monthly profit"
+          isLoading={isLoading}
+        >
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>

@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
+import StatsCardSkeleton from "./skeleton/StatsCardSkeleton";
 
 interface StatsCardProps {
   title: string;
@@ -11,6 +12,7 @@ interface StatsCardProps {
     isPositive: boolean;
   };
   color?: "primary" | "secondary" | "success" | "warning" | "error" | "info";
+  isLoading?: boolean;
 }
 
 const colorMap = {
@@ -53,7 +55,12 @@ export default function StatsCard({
   icon: Icon,
   trend,
   color = "primary",
+  isLoading = false,
 }: StatsCardProps) {
+  if (isLoading) {
+    return <StatsCardSkeleton />;
+  }
+
   const colors = colorMap[color];
 
   return (
