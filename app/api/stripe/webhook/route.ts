@@ -36,9 +36,12 @@ export async function POST(request: NextRequest) {
 }
 */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 // Temporary placeholder endpoint while Stripe is disabled
 export async function POST(request: NextRequest) {
-  return NextResponse.json({ message: 'Stripe functionality disabled' }, { status: 200 });
+  return NextResponse.json(
+    { message: "Stripe functionality disabled" },
+    { status: 200 }
+  );
 }

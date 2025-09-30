@@ -1,10 +1,10 @@
-import { exec } from 'node:child_process';
-import { promises as fs } from 'node:fs';
-import { promisify } from 'node:util';
-import readline from 'node:readline';
-import crypto from 'node:crypto';
-import path from 'node:path';
-import os from 'node:os';
+import { exec } from "node:child_process";
+import { promises as fs } from "node:fs";
+import { promisify } from "node:util";
+import readline from "node:readline";
+import crypto from "node:crypto";
+import path from "node:path";
+import os from "node:os";
 
 const execAsync = promisify(exec);
 
@@ -81,54 +81,54 @@ async function checkStripeCLI() {
 */
 
 async function getPostgresURL(): Promise<string> {
-  console.log('Step 1: Setting up Postgres');
+  console.log("Step 1: Setting up Postgres");
   const dbChoice = await question(
-    'Choose your database option:\n' +
-    '  L - Local Postgres with Docker (development)\n' +
-    '  N - Neon Database (recommended for production)\n' +
-    '  V - Vercel Postgres\n' +
-    '  R - Other remote Postgres\n' +
-    'Enter your choice (L/N/V/R): '
+    "Choose your database option:\n" +
+      "  L - Local Postgres with Docker (development)\n" +
+      "  N - Neon Database (recommended for production)\n" +
+      "  V - Vercel Postgres\n" +
+      "  R - Other remote Postgres\n" +
+      "Enter your choice (L/N/V/R): "
   );
 
-  if (dbChoice.toLowerCase() === 'l') {
-    console.log('Setting up local Postgres instance with Docker...');
+  if (dbChoice.toLowerCase() === "l") {
+    console.log("Setting up local Postgres instance with Docker...");
     await setupLocalPostgres();
-    return 'postgres://postgres:postgres@localhost:54322/postgres';
-  } else if (dbChoice.toLowerCase() === 'n') {
-    console.log('\n📝 Setting up Neon Database:');
-    console.log('1. Go to: https://console.neon.tech/app/projects');
-    console.log('2. Create a new project');
-    console.log('3. Copy the connection string from the dashboard');
-    return await question('Enter your Neon POSTGRES_URL: ');
-  } else if (dbChoice.toLowerCase() === 'v') {
-    console.log('\n📝 Setting up Vercel Postgres:');
-    console.log('1. Go to: https://vercel.com/dashboard');
-    console.log('2. Go to Storage → Create Database → Postgres');
-    console.log('3. Copy the POSTGRES_URL from the .env.local tab');
-    return await question('Enter your Vercel POSTGRES_URL: ');
+    return "postgres://postgres:postgres@localhost:54322/postgres";
+  } else if (dbChoice.toLowerCase() === "n") {
+    console.log("\n📝 Setting up Neon Database:");
+    console.log("1. Go to: https://console.neon.tech/app/projects");
+    console.log("2. Create a new project");
+    console.log("3. Copy the connection string from the dashboard");
+    return await question("Enter your Neon POSTGRES_URL: ");
+  } else if (dbChoice.toLowerCase() === "v") {
+    console.log("\n📝 Setting up Vercel Postgres:");
+    console.log("1. Go to: https://vercel.com/dashboard");
+    console.log("2. Go to Storage → Create Database → Postgres");
+    console.log("3. Copy the POSTGRES_URL from the .env.local tab");
+    return await question("Enter your Vercel POSTGRES_URL: ");
   } else {
-    console.log('\n📝 Using custom remote Postgres database');
-    return await question('Enter your POSTGRES_URL: ');
+    console.log("\n📝 Using custom remote Postgres database");
+    return await question("Enter your POSTGRES_URL: ");
   }
 }
 
 async function setupLocalPostgres() {
-  console.log('Checking if Docker is installed...');
+  console.log("Checking if Docker is installed...");
   try {
-    await execAsync('docker --version');
-    console.log('Docker is installed.');
+    await execAsync("docker --version");
+    console.log("Docker is installed.");
   } catch (error) {
     console.error(
-      'Docker is not installed. Please install Docker and try again.'
+      "Docker is not installed. Please install Docker and try again."
     );
     console.log(
-      'To install Docker, visit: https://docs.docker.com/get-docker/'
+      "To install Docker, visit: https://docs.docker.com/get-docker/"
     );
     process.exit(1);
   }
 
-  console.log('Creating docker-compose.yml file...');
+  console.log("Creating docker-compose.yml file...");
   const dockerComposeContent = `
 services:
   postgres:
@@ -148,18 +148,18 @@ volumes:
 `;
 
   await fs.writeFile(
-    path.join(process.cwd(), 'docker-compose.yml'),
+    path.join(process.cwd(), "docker-compose.yml"),
     dockerComposeContent
   );
-  console.log('docker-compose.yml file created.');
+  console.log("docker-compose.yml file created.");
 
-  console.log('Starting Docker container with `docker compose up -d`...');
+  console.log("Starting Docker container with `docker compose up -d`...");
   try {
-    await execAsync('docker compose up -d');
-    console.log('Docker container started successfully.');
+    await execAsync("docker compose up -d");
+    console.log("Docker container started successfully.");
   } catch (error) {
     console.error(
-      'Failed to start Docker container. Please check your Docker installation and try again.'
+      "Failed to start Docker container. Please check your Docker installation and try again."
     );
     process.exit(1);
   }
@@ -200,32 +200,32 @@ async function createStripeWebhook(): Promise<string> {
 */
 
 function generateAuthSecret(): string {
-  console.log('Step 2: Generating AUTH_SECRET...');
-  return crypto.randomBytes(32).toString('hex');
+  console.log("Step 2: Generating AUTH_SECRET...");
+  return crypto.randomBytes(32).toString("hex");
 }
 
 async function writeEnvFile(envVars: Record<string, string>) {
-  console.log('Step 3: Writing environment variables to .env');
+  console.log("Step 3: Writing environment variables to .env");
   const envContent = Object.entries(envVars)
     .map(([key, value]) => `${key}=${value}`)
-    .join('\n');
+    .join("\n");
 
-  await fs.writeFile(path.join(process.cwd(), '.env'), envContent);
-  console.log('.env file created with the necessary variables.');
-  console.log('\n✅ Setup completed! Your environment is ready.');
-  console.log('\nNext steps:');
-  console.log('1. Run: pnpm db:migrate');
-  console.log('2. Run: pnpm db:seed');
-  console.log('3. Run: pnpm dev');
+  await fs.writeFile(path.join(process.cwd(), ".env"), envContent);
+  console.log(".env file created with the necessary variables.");
+  console.log("\n✅ Setup completed! Your environment is ready.");
+  console.log("\nNext steps:");
+  console.log("1. Run: pnpm db:migrate");
+  console.log("2. Run: pnpm db:seed");
+  console.log("3. Run: pnpm dev");
 }
 
 async function main() {
-  console.log('🚀 Setting up your SaaS project...\n');
-  
+  console.log("🚀 Setting up your SaaS project...\n");
+
   // await checkStripeCLI(); // Commented out - Stripe disabled
-  
+
   const POSTGRES_URL = await getPostgresURL();
-  const BASE_URL = 'http://localhost:3000';
+  const BASE_URL = "http://localhost:3000";
   const AUTH_SECRET = generateAuthSecret();
 
   const envVars: Record<string, string> = {

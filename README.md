@@ -47,6 +47,7 @@ pnpm db:setup
 ```
 
 This will guide you through:
+
 1. **Database Selection**: Choose between:
    - `L` - Local Postgres with Docker (development)
    - `N` - Neon Database (recommended for production)
@@ -64,6 +65,7 @@ pnpm db:seed
 ```
 
 This creates a default user and team:
+
 - **User**: `test@test.com`
 - **Password**: `admin123`
 
@@ -82,23 +84,26 @@ Open [http://localhost:3000](http://localhost:3000) to see your app.
 ### Recommended: Vercel + Neon
 
 1. **Create Neon Database**:
+
    - Go to [Neon Console](https://console.neon.tech/app/projects)
    - Create a new project
    - Copy the connection string
 
 2. **Deploy to Vercel**:
+
    ```bash
    # Push to GitHub first
    git add .
    git commit -m "Initial commit"
    git remote add origin <your-github-repo>
    git push -u origin main
-   
+
    # Deploy with Vercel
    npx vercel --prod
    ```
 
 3. **Set Environment Variables in Vercel**:
+
    - `POSTGRES_URL`: Your Neon connection string
    - `BASE_URL`: Your production domain (e.g., `https://yourapp.vercel.app`)
    - `AUTH_SECRET`: Generate with `openssl rand -base64 32`
@@ -115,18 +120,21 @@ Open [http://localhost:3000](http://localhost:3000) to see your app.
 When you're ready to add payment functionality:
 
 1. **Uncomment Stripe Code**:
+
    - `lib/payments/stripe.ts`
    - `app/api/stripe/*/route.ts`
    - Database schema Stripe fields in `lib/db/schema.ts`
    - Query functions in `lib/db/queries.ts`
 
 2. **Install Stripe CLI**:
+
    ```bash
    # Follow: https://docs.stripe.com/stripe-cli
    stripe login
    ```
 
 3. **Add Environment Variables**:
+
    ```bash
    STRIPE_SECRET_KEY=sk_test_... # or sk_live_... for production
    STRIPE_WEBHOOK_SECRET=whsec_...
@@ -169,6 +177,7 @@ pnpm db:studio    # Open Drizzle Studio
 ## Database Schema
 
 ### Core Tables
+
 - **users**: User accounts and authentication
 - **teams**: Team/organization management
 - **team_members**: User-team relationships
@@ -176,9 +185,11 @@ pnpm db:studio    # Open Drizzle Studio
 - **invitations**: Team invitation management
 
 ### Stripe Fields (Ready for Future Use)
+
 When enabled, teams table will include:
+
 - `stripe_customer_id`
-- `stripe_subscription_id` 
+- `stripe_subscription_id`
 - `stripe_product_id`
 - `plan_name`
 - `subscription_status`
@@ -186,6 +197,7 @@ When enabled, teams table will include:
 ## Contributing
 
 This is your personal project! Feel free to:
+
 - Add new features
 - Customize the UI/UX
 - Integrate additional services

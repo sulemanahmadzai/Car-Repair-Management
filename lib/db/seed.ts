@@ -1,8 +1,8 @@
 // STRIPE FUNCTIONALITY COMMENTED OUT - TO BE ENABLED LATER
 // import { stripe } from '../payments/stripe';
-import { db } from './drizzle';
-import { users, teams, teamMembers } from './schema';
-import { hashPassword } from '@/lib/auth/session';
+import { db } from "./drizzle";
+import { users, teams, teamMembers } from "./schema";
+import { hashPassword } from "@/lib/auth/session";
 
 /*
 async function createStripeProducts() {
@@ -43,8 +43,8 @@ async function createStripeProducts() {
 */
 
 async function seed() {
-  const email = 'test@test.com';
-  const password = 'admin123';
+  const email = "test@test.com";
+  const password = "admin123";
   const passwordHash = await hashPassword(password);
 
   const [user] = await db
@@ -58,19 +58,19 @@ async function seed() {
     ])
     .returning();
 
-  console.log('Initial user created.');
+  console.log("Initial user created.");
 
   const [team] = await db
     .insert(teams)
     .values({
-      name: 'Test Team',
+      name: "Test Team",
     })
     .returning();
 
   await db.insert(teamMembers).values({
     teamId: team.id,
     userId: user.id,
-    role: 'owner',
+    role: "owner",
   });
 
   // await createStripeProducts(); // Commented out while Stripe is disabled
@@ -78,10 +78,10 @@ async function seed() {
 
 seed()
   .catch((error) => {
-    console.error('Seed process failed:', error);
+    console.error("Seed process failed:", error);
     process.exit(1);
   })
   .finally(() => {
-    console.log('Seed process finished. Exiting...');
+    console.log("Seed process finished. Exiting...");
     process.exit(0);
   });

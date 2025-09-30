@@ -99,9 +99,9 @@ export async function GET(request: NextRequest) {
 }
 */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 
 // Temporary placeholder endpoint while Stripe is disabled
 export async function GET(request: NextRequest) {
-  return NextResponse.redirect(new URL('/dashboard', request.url));
+  return NextResponse.redirect(new URL("/dashboard", request.url));
 }
