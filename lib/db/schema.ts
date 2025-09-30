@@ -69,10 +69,32 @@ export const invitations = pgTable("invitations", {
   status: varchar("status", { length: 20 }).notNull().default("pending"),
 });
 
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .notNull()
+    .references(() => teams.id),
+  name: varchar("name", { length: 255 }).notNull(),
+  mobileNumber: varchar("mobile_number", { length: 20 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  address: text("address"),
+  // Vehicle Information
+  registrationNumber: varchar("registration_number", { length: 20 }).notNull(),
+  make: varchar("make", { length: 100 }),
+  model: varchar("model", { length: 100 }),
+  colour: varchar("colour", { length: 50 }),
+  fuelType: varchar("fuel_type", { length: 50 }),
+  motExpiry: varchar("mot_expiry", { length: 20 }),
+  taxDueDate: varchar("tax_due_date", { length: 20 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
   invitations: many(invitations),
+  customers: many(customers),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -113,6 +135,13 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   }),
 }));
 
+export const customersRelations = relations(customers, ({ one }) => ({
+  team: one(teams, {
+    fields: [customers.teamId],
+    references: [teams.id],
+  }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
@@ -123,6 +152,8 @@ export type ActivityLog = typeof activityLogs.$inferSelect;
 export type NewActivityLog = typeof activityLogs.$inferInsert;
 export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
+export type Customer = typeof customers.$inferSelect;
+export type NewCustomer = typeof customers.$inferInsert;
 export type TeamDataWithMembers = Team & {
   teamMembers: (TeamMember & {
     user: Pick<User, "id" | "name" | "email">;

@@ -1,24 +1,35 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Suspense } from "react";
+import useSWR from "swr";
+import {
+  Users,
+  TrendingUp,
+  ShoppingCart,
+  DollarSign,
+  Activity,
+  ArrowUpRight,
+  ArrowDownRight,
+} from "lucide-react";
+import StatsCard from "@/components/dashboard/StatsCard";
+import DashboardCard from "@/components/dashboard/DashboardCard";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter
-} from '@/components/ui/card';
-import { customerPortalAction } from '@/lib/payments/actions';
-import { useActionState } from 'react';
-import { TeamDataWithMembers, User } from '@/lib/db/schema';
-import { removeTeamMember, inviteTeamMember } from '@/app/(login)/actions';
-import useSWR from 'swr';
-import { Suspense } from 'react';
-import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Loader2, PlusCircle } from 'lucide-react';
+  CardFooter,
+} from "@/components/ui/card";
+import { customerPortalAction } from "@/lib/payments/actions";
+import { useActionState } from "react";
+import { TeamDataWithMembers, User } from "@/lib/db/schema";
+import { removeTeamMember, inviteTeamMember } from "@/app/(login)/actions";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Loader2, PlusCircle } from "lucide-react";
 
 type ActionState = {
   error?: string;
@@ -38,7 +49,7 @@ function SubscriptionSkeleton() {
 }
 
 function ManageSubscription() {
-  const { data: teamData } = useSWR<TeamDataWithMembers>('/api/team', fetcher);
+  const { data: teamData } = useSWR<TeamDataWithMembers>("/api/team", fetcher);
 
   return (
     <Card className="mb-8">
@@ -50,14 +61,14 @@ function ManageSubscription() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <div className="mb-4 sm:mb-0">
               <p className="font-medium">
-                Current Plan: {teamData?.planName || 'Free'}
+                Current Plan: {teamData?.planName || "Free"}
               </p>
               <p className="text-sm text-muted-foreground">
-                {teamData?.subscriptionStatus === 'active'
-                  ? 'Billed monthly'
-                  : teamData?.subscriptionStatus === 'trialing'
-                  ? 'Trial period'
-                  : 'No active subscription'}
+                {teamData?.subscriptionStatus === "active"
+                  ? "Billed monthly"
+                  : teamData?.subscriptionStatus === "trialing"
+                  ? "Trial period"
+                  : "No active subscription"}
               </p>
             </div>
             <form action={customerPortalAction}>
@@ -94,14 +105,14 @@ function TeamMembersSkeleton() {
 }
 
 function TeamMembers() {
-  const { data: teamData } = useSWR<TeamDataWithMembers>('/api/team', fetcher);
+  const { data: teamData } = useSWR<TeamDataWithMembers>("/api/team", fetcher);
   const [removeState, removeAction, isRemovePending] = useActionState<
     ActionState,
     FormData
   >(removeTeamMember, {});
 
-  const getUserDisplayName = (user: Pick<User, 'id' | 'name' | 'email'>) => {
-    return user.name || user.email || 'Unknown User';
+  const getUserDisplayName = (user: Pick<User, "id" | "name" | "email">) => {
+    return user.name || user.email || "Unknown User";
   };
 
   if (!teamData?.teamMembers?.length) {
@@ -139,9 +150,9 @@ function TeamMembers() {
                   */}
                   <AvatarFallback>
                     {getUserDisplayName(member.user)
-                      .split(' ')
+                      .split(" ")
                       .map((n) => n[0])
-                      .join('')}
+                      .join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div>
@@ -162,7 +173,7 @@ function TeamMembers() {
                     size="sm"
                     disabled={isRemovePending}
                   >
-                    {isRemovePending ? 'Removing...' : 'Remove'}
+                    {isRemovePending ? "Removing..." : "Remove"}
                   </Button>
                 </form>
               ) : null}
@@ -188,8 +199,8 @@ function InviteTeamMemberSkeleton() {
 }
 
 function InviteTeamMember() {
-  const { data: user } = useSWR<User>('/api/user', fetcher);
-  const isOwner = user?.role === 'owner';
+  const { data: user } = useSWR<User>("/api/user", fetcher);
+  const isOwner = user?.role === "owner";
   const [inviteState, inviteAction, isInvitePending] = useActionState<
     ActionState,
     FormData
@@ -269,19 +280,144 @@ function InviteTeamMember() {
   );
 }
 
-export default function SettingsPage() {
+export default function DashboardPage() {
   return (
-    <section className="flex-1 p-4 lg:p-8">
-      <h1 className="text-lg lg:text-2xl font-medium mb-6">Team Settings</h1>
-      <Suspense fallback={<SubscriptionSkeleton />}>
-        <ManageSubscription />
-      </Suspense>
-      <Suspense fallback={<TeamMembersSkeleton />}>
-        <TeamMembers />
-      </Suspense>
-      <Suspense fallback={<InviteTeamMemberSkeleton />}>
-        <InviteTeamMember />
-      </Suspense>
-    </section>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-muted-foreground mt-1">
+          Welcome to your modern dashboard
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          title="Total Revenue"
+          value="$48,569"
+          subtitle="Last month"
+          icon={DollarSign}
+          color="primary"
+          trend={{ value: "+12.5%", isPositive: true }}
+        />
+        <StatsCard
+          title="Total Customers"
+          value="1,256"
+          subtitle="Active users"
+          icon={Users}
+          color="secondary"
+          trend={{ value: "+8.2%", isPositive: true }}
+        />
+        <StatsCard
+          title="Total Orders"
+          value="389"
+          subtitle="This month"
+          icon={ShoppingCart}
+          color="success"
+          trend={{ value: "+24.1%", isPositive: true }}
+        />
+        <StatsCard
+          title="Conversion Rate"
+          value="3.2%"
+          subtitle="vs last month"
+          icon={TrendingUp}
+          color="warning"
+          trend={{ value: "-2.4%", isPositive: false }}
+        />
+      </div>
+
+      {/* Charts & Tables */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Updates */}
+        <DashboardCard
+          title="Revenue Updates"
+          subtitle="Overview of latest month"
+          className="lg:col-span-2"
+        >
+          <div className="h-64 flex items-center justify-center bg-[hsl(var(--grey-100))] rounded-lg">
+            <p className="text-muted-foreground">Chart Placeholder</p>
+          </div>
+        </DashboardCard>
+
+        {/* Yearly Breakup */}
+        <DashboardCard title="Yearly Breakup" subtitle="Total revenue">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-3xl font-bold text-foreground">$36,358</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="flex items-center text-sm text-[hsl(var(--success))]">
+                    <ArrowUpRight className="w-4 h-4" />
+                    +9%
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    last year
+                  </span>
+                </div>
+              </div>
+              <div className="w-24 h-24 bg-[hsl(var(--primary-light))] rounded-full"></div>
+            </div>
+            <div className="pt-4 border-t space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-[hsl(var(--primary))]"></div>
+                  <span className="text-muted-foreground">2024</span>
+                </div>
+                <span className="font-medium">$25,000</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-[hsl(var(--secondary))]"></div>
+                  <span className="text-muted-foreground">2023</span>
+                </div>
+                <span className="font-medium">$11,358</span>
+              </div>
+            </div>
+          </div>
+        </DashboardCard>
+
+        {/* Monthly Earnings */}
+        <DashboardCard title="Monthly Earnings" subtitle="Total monthly profit">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-3xl font-bold text-foreground">$6,820</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="flex items-center text-sm text-[hsl(var(--error))]">
+                    <ArrowDownRight className="w-4 h-4" />
+                    -9%
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    last month
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="h-24 bg-[hsl(var(--grey-100))] rounded-lg flex items-center justify-center">
+              <p className="text-xs text-muted-foreground">Chart Area</p>
+            </div>
+          </div>
+        </DashboardCard>
+      </div>
+
+      {/* Team Settings Section */}
+      <div className="pt-6 border-t">
+        <h2 className="text-xl font-bold text-foreground mb-6">
+          Team Settings
+        </h2>
+        <div className="space-y-6">
+          <Suspense fallback={<SubscriptionSkeleton />}>
+            <ManageSubscription />
+          </Suspense>
+          <Suspense fallback={<TeamMembersSkeleton />}>
+            <TeamMembers />
+          </Suspense>
+          <Suspense fallback={<InviteTeamMemberSkeleton />}>
+            <InviteTeamMember />
+          </Suspense>
+        </div>
+      </div>
+    </div>
   );
 }

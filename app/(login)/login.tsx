@@ -1,51 +1,55 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useActionState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { CircleIcon, Loader2 } from 'lucide-react';
-import { signIn, signUp } from './actions';
-import { ActionState } from '@/lib/auth/middleware';
+import Link from "next/link";
+import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { signIn, signUp } from "./actions";
+import { ActionState } from "@/lib/auth/middleware";
+import { Card, CardContent } from "@/components/ui/card";
 
-export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
+export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect');
-  const priceId = searchParams.get('priceId');
-  const inviteId = searchParams.get('inviteId');
+  const redirect = searchParams.get("redirect");
+  const priceId = searchParams.get("priceId");
+  const inviteId = searchParams.get("inviteId");
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
-    mode === 'signin' ? signIn : signUp,
-    { error: '' }
+    mode === "signin" ? signIn : signUp,
+    { error: "" }
   );
 
   return (
-    <div className="min-h-[100dvh] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <CircleIcon className="h-12 w-12 text-orange-500" />
-        </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          {mode === 'signin'
-            ? 'Sign in to your account'
-            : 'Create your account'}
-        </h2>
-      </div>
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      {/* Animated Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-green-100 via-blue-100 to-purple-100 opacity-30 animate-gradient"></div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <form className="space-y-6" action={formAction}>
-          <input type="hidden" name="redirect" value={redirect || ''} />
-          <input type="hidden" name="priceId" value={priceId || ''} />
-          <input type="hidden" name="inviteId" value={inviteId || ''} />
-          <div>
-            <Label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email
-            </Label>
-            <div className="mt-1">
+      {/* Login Card */}
+      <Card className="relative z-10 w-full max-w-md shadow-2xl">
+        <CardContent className="p-8">
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-blue-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-2xl">M</span>
+            </div>
+          </div>
+
+          {/* Form */}
+          <form action={formAction} className="space-y-4">
+            <input type="hidden" name="redirect" value={redirect || ""} />
+            <input type="hidden" name="priceId" value={priceId || ""} />
+            <input type="hidden" name="inviteId" value={inviteId || ""} />
+
+            {/* Email Field */}
+            <div>
+              <Label
+                htmlFor="email"
+                className="text-sm font-semibold text-foreground mb-2 inline-block"
+              >
+                Email Address
+              </Label>
               <Input
                 id="email"
                 name="email"
@@ -54,89 +58,123 @@ export function Login({ mode = 'signin' }: { mode?: 'signin' | 'signup' }) {
                 defaultValue={state.email}
                 required
                 maxLength={50}
-                className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                className="h-11"
                 placeholder="Enter your email"
               />
             </div>
-          </div>
 
-          <div>
-            <Label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </Label>
-            <div className="mt-1">
+            {/* Password Field */}
+            <div>
+              <Label
+                htmlFor="password"
+                className="text-sm font-semibold text-foreground mb-2 inline-block"
+              >
+                Password
+              </Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete={
-                  mode === 'signin' ? 'current-password' : 'new-password'
+                  mode === "signin" ? "current-password" : "new-password"
                 }
                 defaultValue={state.password}
                 required
                 minLength={8}
                 maxLength={100}
-                className="appearance-none rounded-full relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
+                className="h-11"
                 placeholder="Enter your password"
               />
             </div>
-          </div>
 
-          {state?.error && (
-            <div className="text-red-500 text-sm">{state.error}</div>
-          )}
+            {/* Remember Me & Forgot Password (Sign In Only) */}
+            {mode === "signin" && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="remember"
+                    className="h-4 w-4 rounded border-gray-300 text-orange-600 focus:ring-2 focus:ring-orange-500 cursor-pointer"
+                  />
+                  <label
+                    htmlFor="remember"
+                    className="text-sm font-medium text-foreground cursor-pointer"
+                  >
+                    Remember this Device
+                  </label>
+                </div>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm font-medium text-orange-600 hover:text-orange-700"
+                >
+                  Forgot Password?
+                </Link>
+              </div>
+            )}
 
-          <div>
+            {/* Error Message */}
+            {state?.error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {state.error}
+              </div>
+            )}
+
+            {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white font-semibold text-base"
               disabled={pending}
             >
               {pending ? (
                 <>
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                  <Loader2 className="animate-spin mr-2 h-5 w-5" />
                   Loading...
                 </>
-              ) : mode === 'signin' ? (
-                'Sign in'
+              ) : mode === "signin" ? (
+                "Sign In"
               ) : (
-                'Sign up'
+                "Sign Up"
               )}
             </Button>
-          </div>
-        </form>
+          </form>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-gray-50 text-gray-500">
-                {mode === 'signin'
-                  ? 'New to our platform?'
-                  : 'Already have an account?'}
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-6">
+          {/* Switch Mode Link */}
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm">
+            <span className="text-muted-foreground font-medium">
+              {mode === "signin"
+                ? "New to Modernize?"
+                : "Already have an Account?"}
+            </span>
             <Link
-              href={`${mode === 'signin' ? '/sign-up' : '/sign-in'}${
-                redirect ? `?redirect=${redirect}` : ''
-              }${priceId ? `&priceId=${priceId}` : ''}`}
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+              href={`${mode === "signin" ? "/sign-up" : "/sign-in"}${
+                redirect ? `?redirect=${redirect}` : ""
+              }${priceId ? `&priceId=${priceId}` : ""}`}
+              className="font-semibold text-orange-600 hover:text-orange-700"
             >
-              {mode === 'signin'
-                ? 'Create an account'
-                : 'Sign in to existing account'}
+              {mode === "signin" ? "Create an account" : "Sign In"}
             </Link>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+
+      {/* Gradient Animation CSS */}
+      <style jsx global>{`
+        @keyframes gradient {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+        .animate-gradient {
+          background-size: 400% 400%;
+          animation: gradient 15s ease infinite;
+        }
+      `}</style>
     </div>
   );
 }
