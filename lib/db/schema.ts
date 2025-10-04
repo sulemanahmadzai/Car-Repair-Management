@@ -110,6 +110,22 @@ export const serviceRecords = pgTable("service_records", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const bookings = pgTable("bookings", {
+  id: serial("id").primaryKey(),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  carReg: varchar("car_reg", { length: 20 }).notNull(),
+  services: jsonb("services").$type<string[]>().notNull(),
+  bookDate: varchar("book_date", { length: 20 }).notNull(),
+  bookTime: varchar("book_time", { length: 20 }).notNull(),
+  message: text("message"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
@@ -174,6 +190,8 @@ export const serviceRecordsRelations = relations(serviceRecords, ({ one }) => ({
   }),
 }));
 
+export const bookingsRelations = relations(bookings, ({ one }) => ({}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
@@ -188,6 +206,8 @@ export type Customer = typeof customers.$inferSelect;
 export type NewCustomer = typeof customers.$inferInsert;
 export type ServiceRecord = typeof serviceRecords.$inferSelect;
 export type NewServiceRecord = typeof serviceRecords.$inferInsert;
+export type Booking = typeof bookings.$inferSelect;
+export type NewBooking = typeof bookings.$inferInsert;
 export type TeamDataWithMembers = Team & {
   teamMembers: (TeamMember & {
     user: Pick<User, "id" | "name" | "email">;

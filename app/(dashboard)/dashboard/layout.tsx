@@ -43,6 +43,7 @@ export default function DashboardLayout({
     fetchUser();
   }, []);
 
+  // Always show loader during SSR and initial client render to prevent hydration mismatch
   if (!mounted || isInitialLoading) {
     return <DashboardLoader />;
   }

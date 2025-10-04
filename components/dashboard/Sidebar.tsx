@@ -14,6 +14,7 @@ import {
   DollarSign,
   Mail,
   Wrench,
+  Calendar,
 } from "lucide-react";
 
 interface MenuItem {
@@ -38,6 +39,11 @@ const menuItems: MenuItem[] = [
     title: "Customers",
     href: "/dashboard/customers",
     icon: <Users className="w-5 h-5" />,
+  },
+  {
+    title: "Bookings",
+    href: "/dashboard/bookings",
+    icon: <Calendar className="w-5 h-5" />,
   },
   {
     title: "Service Records",
