@@ -15,6 +15,9 @@ import {
   Clock,
   FileText,
   Package,
+  Image as ImageIcon,
+  DollarSign,
+  Users,
 } from "lucide-react";
 import useSWR from "swr";
 
@@ -237,6 +240,109 @@ export default function ServiceRecordDetailPage({
             <p className="text-foreground whitespace-pre-wrap leading-relaxed">
               {record.notes}
             </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Cost & Staff Info */}
+      {(record.totalCost ||
+        (record.assignedStaff && record.assignedStaff.length > 0)) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {record.totalCost && (
+            <Card>
+              <CardHeader className="border-b">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <CardTitle className="text-xl font-semibold">
+                    Total Cost
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <p className="text-3xl font-bold text-green-600">
+                  £{record.totalCost}
+                </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {record.assignedStaff && record.assignedStaff.length > 0 && (
+            <Card>
+              <CardHeader className="border-b">
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-purple-600" />
+                  <CardTitle className="text-xl font-semibold">
+                    Assigned Staff
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <p className="text-lg font-medium text-foreground">
+                  {record.assignedStaff.length} staff member
+                  {record.assignedStaff.length > 1 ? "s" : ""} assigned
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* Before Service Images */}
+      {record.beforeImages && record.beforeImages.length > 0 && (
+        <Card>
+          <CardHeader className="border-b">
+            <div className="flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-red-600" />
+              <CardTitle className="text-xl font-semibold">
+                Before Service Images
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {record.beforeImages.map((image: string, index: number) => (
+                <div key={index} className="group relative">
+                  <img
+                    src={image}
+                    alt={`Before service ${index + 1}`}
+                    loading="lazy"
+                    className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-orange-400 transition-all cursor-pointer"
+                    onClick={() => window.open(image, "_blank")}
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 rounded-lg transition-all" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* After Service Images */}
+      {record.afterImages && record.afterImages.length > 0 && (
+        <Card>
+          <CardHeader className="border-b">
+            <div className="flex items-center gap-2">
+              <ImageIcon className="w-5 h-5 text-green-600" />
+              <CardTitle className="text-xl font-semibold">
+                After Service Images
+              </CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {record.afterImages.map((image: string, index: number) => (
+                <div key={index} className="group relative">
+                  <img
+                    src={image}
+                    alt={`After service ${index + 1}`}
+                    loading="lazy"
+                    className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-green-400 transition-all cursor-pointer"
+                    onClick={() => window.open(image, "_blank")}
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 rounded-lg transition-all" />
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

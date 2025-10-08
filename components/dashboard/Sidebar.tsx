@@ -15,6 +15,7 @@ import {
   Mail,
   Wrench,
   Calendar,
+  UserCircle,
 } from "lucide-react";
 
 interface MenuItem {
@@ -39,6 +40,11 @@ const menuItems: MenuItem[] = [
     title: "Customers",
     href: "/dashboard/customers",
     icon: <Users className="w-5 h-5" />,
+  },
+  {
+    title: "Staff",
+    href: "/dashboard/staff",
+    icon: <UserCircle className="w-5 h-5" />,
   },
   {
     title: "Bookings",

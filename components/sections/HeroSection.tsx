@@ -80,7 +80,7 @@ export default function HeroSection() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Button
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg font-semibold shadow-lg shadow-primary/50 hover:shadow-xl hover:shadow-primary/60 transition-all duration-300"
+                className="border-2 hover:text-black hover:bg-white text-white px-8 py-6 text-lg font-semibold shadow-lg shadow-primary/50 hover:shadow-xl hover:shadow-primary/60 transition-all duration-300"
                 onClick={() => (window.location.href = "/booking")}
               >
                 <Calendar className="w-5 h-5 mr-2" />
@@ -89,7 +89,7 @@ export default function HeroSection() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-2 border-white/20 text-white hover:bg-white/10 px-8 py-6 text-lg font-semibold backdrop-blur-sm"
+                className=" text-black hover:bg-white/10 hover:text-white px-8 py-6 text-lg font-semibold backdrop-blur-sm"
                 onClick={() => (window.location.href = "tel:+18001234567")}
               >
                 <Phone className="w-5 h-5 mr-2" />

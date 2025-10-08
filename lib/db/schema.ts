@@ -104,7 +104,11 @@ export const serviceRecords = pgTable("service_records", {
   notes: text("notes"),
   mediaFiles:
     jsonb("media_files").$type<{ url: string; type: string; name: string }[]>(),
-  status: varchar("status", { length: 20 }).notNull().default("completed"),
+  beforeImages: jsonb("before_images").$type<string[]>(),
+  afterImages: jsonb("after_images").$type<string[]>(),
+  assignedStaff: jsonb("assigned_staff").$type<number[]>(),
+  totalCost: varchar("total_cost", { length: 50 }),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
   createdBy: integer("created_by").references(() => users.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -126,12 +130,40 @@ export const bookings = pgTable("bookings", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const staff = pgTable("staff", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id")
+    .notNull()
+    .references(() => teams.id),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  gender: varchar("gender", { length: 20 }),
+  dateOfBirth: varchar("date_of_birth", { length: 20 }),
+  phoneNumber: varchar("phone_number", { length: 20 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  address: text("address"),
+  role: varchar("role", { length: 100 }),
+  department: varchar("department", { length: 100 }),
+  joiningDate: varchar("joining_date", { length: 20 }),
+  status: varchar("status", { length: 20 }).notNull().default("active"),
+  shiftTime: varchar("shift_time", { length: 100 }),
+  salary: varchar("salary", { length: 50 }),
+  paymentType: varchar("payment_type", { length: 50 }),
+  lastPaymentDate: varchar("last_payment_date", { length: 20 }),
+  tasksCompleted: integer("tasks_completed").default(0),
+  emergencyContactName: varchar("emergency_contact_name", { length: 255 }),
+  emergencyContactPhone: varchar("emergency_contact_phone", { length: 20 }),
+  relationship: varchar("relationship", { length: 100 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
   activityLogs: many(activityLogs),
   invitations: many(invitations),
   customers: many(customers),
   serviceRecords: many(serviceRecords),
+  staff: many(staff),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -192,6 +224,13 @@ export const serviceRecordsRelations = relations(serviceRecords, ({ one }) => ({
 
 export const bookingsRelations = relations(bookings, ({ one }) => ({}));
 
+export const staffRelations = relations(staff, ({ one }) => ({
+  team: one(teams, {
+    fields: [staff.teamId],
+    references: [teams.id],
+  }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;
@@ -208,6 +247,8 @@ export type ServiceRecord = typeof serviceRecords.$inferSelect;
 export type NewServiceRecord = typeof serviceRecords.$inferInsert;
 export type Booking = typeof bookings.$inferSelect;
 export type NewBooking = typeof bookings.$inferInsert;
+export type Staff = typeof staff.$inferSelect;
+export type NewStaff = typeof staff.$inferInsert;
 export type TeamDataWithMembers = Team & {
   teamMembers: (TeamMember & {
     user: Pick<User, "id" | "name" | "email">;

@@ -7,8 +7,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Plus, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  X,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+  Upload,
+} from "lucide-react";
 import useSWR from "swr";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -20,6 +35,32 @@ const SERVICE_TYPES = [
   "Custom",
 ];
 
+const SERVICE_STATUS = [
+  "pending",
+  "assigned",
+  "in-progress",
+  "completed",
+  "on-hold",
+];
+
+interface CustomerData {
+  id: number;
+  name: string;
+  mobileNumber: string;
+  make: string | null;
+  model: string | null;
+  colour: string | null;
+  fuelType: string | null;
+  motExpiry: string | null;
+  taxDueDate: string | null;
+}
+
+interface StaffMember {
+  id: number;
+  fullName: string;
+  status: string;
+}
+
 export default function EditServiceRecordPage({
   params,
 }: {
@@ -28,20 +69,48 @@ export default function EditServiceRecordPage({
   const resolvedParams = use(params);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [fetchingCustomer, setFetchingCustomer] = useState(false);
+  const [customerData, setCustomerData] = useState<CustomerData | null>(null);
+  const [customerNotFound, setCustomerNotFound] = useState(false);
   const [formData, setFormData] = useState({
     vehicleReg: "",
     serviceType: "",
     mileage: "",
     labourHours: "",
     notes: "",
+    totalCost: "",
+    status: "pending",
   });
   const [parts, setParts] = useState<string[]>([]);
   const [newPart, setNewPart] = useState("");
+  const [beforeImages, setBeforeImages] = useState<string[]>([]);
+  const [afterImages, setAfterImages] = useState<string[]>([]);
+  const [assignedStaff, setAssignedStaff] = useState<number[]>([]);
+  const [staffList, setStaffList] = useState<StaffMember[]>([]);
 
   const { data: record, error } = useSWR(
     `/api/service-records/${resolvedParams.id}`,
     fetcher
   );
+
+  // Fetch active staff members on component mount
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        const response = await fetch("/api/staff");
+        if (response.ok) {
+          const data = await response.json();
+          const activeStaff = data.filter(
+            (s: StaffMember) => s.status === "active"
+          );
+          setStaffList(activeStaff);
+        }
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+      }
+    };
+    fetchStaff();
+  }, []);
 
   useEffect(() => {
     if (record) {
@@ -51,10 +120,122 @@ export default function EditServiceRecordPage({
         mileage: record.mileage?.toString() || "",
         labourHours: record.labourHours?.toString() || "",
         notes: record.notes || "",
+        totalCost: record.totalCost || "",
+        status: record.status || "pending",
       });
       setParts(record.partsUsed || []);
+      setBeforeImages(record.beforeImages || []);
+      setAfterImages(record.afterImages || []);
+      setAssignedStaff(record.assignedStaff || []);
     }
   }, [record]);
+
+  // Fetch customer data when vehicle registration changes
+  useEffect(() => {
+    const fetchCustomerByRegistration = async () => {
+      if (!formData.vehicleReg || formData.vehicleReg.length < 3) {
+        setCustomerData(null);
+        setCustomerNotFound(false);
+        return;
+      }
+
+      setFetchingCustomer(true);
+      setCustomerNotFound(false);
+
+      try {
+        const response = await fetch(
+          `/api/customers/by-registration?registrationNumber=${encodeURIComponent(
+            formData.vehicleReg
+          )}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.found && data.customer) {
+            setCustomerData(data.customer);
+            setCustomerNotFound(false);
+          }
+        } else if (response.status === 404) {
+          setCustomerData(null);
+          setCustomerNotFound(true);
+        }
+      } catch (error) {
+        console.error("Error fetching customer:", error);
+        setCustomerData(null);
+      } finally {
+        setFetchingCustomer(false);
+      }
+    };
+
+    // Debounce the API call
+    const timeoutId = setTimeout(fetchCustomerByRegistration, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.vehicleReg]);
+
+  const handleImageUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: "before" | "after"
+  ) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = (height * MAX_WIDTH) / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = (width * MAX_HEIGHT) / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          const base64 = canvas.toDataURL("image/jpeg", 0.7);
+
+          if (type === "before") {
+            setBeforeImages((prev) => [...prev, base64]);
+          } else {
+            setAfterImages((prev) => [...prev, base64]);
+          }
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index: number, type: "before" | "after") => {
+    if (type === "before") {
+      setBeforeImages((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      setAfterImages((prev) => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const toggleStaffAssignment = (staffId: number) => {
+    setAssignedStaff((prev) =>
+      prev.includes(staffId)
+        ? prev.filter((id) => id !== staffId)
+        : [...prev, staffId]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +252,9 @@ export default function EditServiceRecordPage({
           body: JSON.stringify({
             ...formData,
             partsUsed: parts,
+            beforeImages,
+            afterImages,
+            assignedStaff,
           }),
         }
       );
@@ -155,26 +339,152 @@ export default function EditServiceRecordPage({
               <hr className="mb-6 border-gray-200" />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <div className="md:col-span-2">
                   <Label
                     htmlFor="vehicleReg"
                     className="text-sm font-semibold text-foreground mb-2 inline-block"
                   >
                     Vehicle Registration Number *
                   </Label>
-                  <Input
-                    id="vehicleReg"
-                    value={formData.vehicleReg}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        vehicleReg: e.target.value.toUpperCase(),
-                      })
-                    }
-                    placeholder="e.g., AB12 CDE"
-                    className="h-11"
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="vehicleReg"
+                      value={formData.vehicleReg}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          vehicleReg: e.target.value.toUpperCase(),
+                        })
+                      }
+                      placeholder="e.g., AB12 CDE"
+                      className="h-11"
+                      required
+                    />
+                    {fetchingCustomer && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Customer Found Message */}
+                  {customerData && !fetchingCustomer && (
+                    <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-green-800 mb-2">
+                            Customer Found
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                Name:
+                              </span>{" "}
+                              <span className="text-gray-900">
+                                {customerData.name}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-700">
+                                Mobile:
+                              </span>{" "}
+                              <span className="text-gray-900">
+                                {customerData.mobileNumber}
+                              </span>
+                            </div>
+                            {customerData.make && (
+                              <div>
+                                <span className="font-medium text-gray-700">
+                                  Make:
+                                </span>{" "}
+                                <span className="text-gray-900">
+                                  {customerData.make}
+                                </span>
+                              </div>
+                            )}
+                            {customerData.model && (
+                              <div>
+                                <span className="font-medium text-gray-700">
+                                  Model:
+                                </span>{" "}
+                                <span className="text-gray-900">
+                                  {customerData.model}
+                                </span>
+                              </div>
+                            )}
+                            {customerData.colour && (
+                              <div>
+                                <span className="font-medium text-gray-700">
+                                  Colour:
+                                </span>{" "}
+                                <span className="text-gray-900">
+                                  {customerData.colour}
+                                </span>
+                              </div>
+                            )}
+                            {customerData.fuelType && (
+                              <div>
+                                <span className="font-medium text-gray-700">
+                                  Fuel Type:
+                                </span>{" "}
+                                <span className="text-gray-900">
+                                  {customerData.fuelType}
+                                </span>
+                              </div>
+                            )}
+                            {customerData.motExpiry && (
+                              <div>
+                                <span className="font-medium text-gray-700">
+                                  MOT Expiry:
+                                </span>{" "}
+                                <span className="text-gray-900">
+                                  {customerData.motExpiry}
+                                </span>
+                              </div>
+                            )}
+                            {customerData.taxDueDate && (
+                              <div>
+                                <span className="font-medium text-gray-700">
+                                  Tax Due Date:
+                                </span>{" "}
+                                <span className="text-gray-900">
+                                  {customerData.taxDueDate}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Customer Not Found Message */}
+                  {customerNotFound && !fetchingCustomer && (
+                    <div className="mt-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-red-800 mb-1">
+                            Customer Not Found
+                          </p>
+                          <p className="text-sm text-red-700">
+                            No customer exists with this registration number.
+                            Please add the customer first.
+                          </p>
+                          <Button
+                            type="button"
+                            onClick={() => router.push("/dashboard/customers")}
+                            variant="outline"
+                            size="sm"
+                            className="mt-3 border-red-300 text-red-700 hover:bg-red-100"
+                          >
+                            Go to Customers
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -314,6 +624,188 @@ export default function EditServiceRecordPage({
                 rows={6}
                 className="resize-none"
               />
+            </div>
+
+            {/* Total Cost & Status */}
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mb-4">
+                Cost & Status
+              </h3>
+              <hr className="mb-6 border-gray-200" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label
+                    htmlFor="totalCost"
+                    className="text-sm font-semibold text-foreground mb-2 inline-block"
+                  >
+                    Total Cost (£)
+                  </Label>
+                  <Input
+                    id="totalCost"
+                    type="text"
+                    value={formData.totalCost}
+                    onChange={(e) =>
+                      setFormData({ ...formData, totalCost: e.target.value })
+                    }
+                    placeholder="e.g., 250.00"
+                    className="h-11"
+                  />
+                </div>
+
+                <div>
+                  <Label
+                    htmlFor="status"
+                    className="text-sm font-semibold text-foreground mb-2 inline-block"
+                  >
+                    Status
+                  </Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, status: value })
+                    }
+                  >
+                    <SelectTrigger className="h-11">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SERVICE_STATUS.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Assign Staff */}
+            {staffList.length > 0 && (
+              <div>
+                <h3 className="text-xl font-semibold text-foreground mb-4">
+                  Assign Staff
+                </h3>
+                <hr className="mb-6 border-gray-200" />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {staffList.map((staff) => (
+                    <div
+                      key={staff.id}
+                      onClick={() => toggleStaffAssignment(staff.id)}
+                      className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        assignedStaff.includes(staff.id)
+                          ? "border-orange-500 bg-orange-50"
+                          : "border-gray-200 hover:border-orange-300"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm">
+                          {staff.fullName}
+                        </span>
+                        {assignedStaff.includes(staff.id) && (
+                          <CheckCircle className="w-5 h-5 text-orange-500" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Before Service Images */}
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mb-4">
+                Before Service Images
+              </h3>
+              <hr className="mb-6 border-gray-200" />
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-semibold text-foreground mb-2 inline-block">
+                    Upload Before Images
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleImageUpload(e, "before")}
+                      className="h-11 cursor-pointer"
+                    />
+                    <Upload className="w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+
+                {beforeImages.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {beforeImages.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={image}
+                          alt={`Before ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index, "before")}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* After Service Images */}
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mb-4">
+                After Service Images
+              </h3>
+              <hr className="mb-6 border-gray-200" />
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-sm font-semibold text-foreground mb-2 inline-block">
+                    Upload After Images
+                  </Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleImageUpload(e, "after")}
+                      className="h-11 cursor-pointer"
+                    />
+                    <Upload className="w-5 h-5 text-gray-400" />
+                  </div>
+                </div>
+
+                {afterImages.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {afterImages.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={image}
+                          alt={`After ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index, "after")}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Action Buttons */}
