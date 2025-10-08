@@ -92,9 +92,23 @@ export async function GET(request: NextRequest) {
       .select({ count: sql<number>`count(*)` })
       .from(bookings);
 
-    // Get paginated bookings, newest first
+    // Optimized query - only select fields needed for list view
     const items = await db
-      .select()
+      .select({
+        id: bookings.id,
+        firstName: bookings.firstName,
+        lastName: bookings.lastName,
+        phone: bookings.phone,
+        email: bookings.email,
+        carReg: bookings.carReg,
+        services: bookings.services,
+        bookDate: bookings.bookDate,
+        bookTime: bookings.bookTime,
+        message: bookings.message,
+        status: bookings.status,
+        createdAt: bookings.createdAt,
+        // Exclude heavy fields: updatedAt
+      })
       .from(bookings)
       .orderBy(desc(bookings.createdAt))
       .limit(pageSize)

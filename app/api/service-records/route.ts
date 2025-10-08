@@ -58,24 +58,17 @@ export async function GET(request: Request) {
       .from(serviceRecords)
       .where(and(...conditions));
 
-    // Exclude image fields for better performance in list view
+    // Optimized query - only select fields needed for list view
     const items = await db
       .select({
         id: serviceRecords.id,
-        teamId: serviceRecords.teamId,
         vehicleReg: serviceRecords.vehicleReg,
         serviceType: serviceRecords.serviceType,
         mileage: serviceRecords.mileage,
         labourHours: serviceRecords.labourHours,
-        partsUsed: serviceRecords.partsUsed,
-        notes: serviceRecords.notes,
-        mediaFiles: serviceRecords.mediaFiles,
-        assignedStaff: serviceRecords.assignedStaff,
-        totalCost: serviceRecords.totalCost,
         status: serviceRecords.status,
         createdAt: serviceRecords.createdAt,
-        updatedAt: serviceRecords.updatedAt,
-        // Explicitly exclude beforeImages and afterImages for performance
+        // Exclude heavy fields: beforeImages, afterImages, partsUsed, notes, mediaFiles, assignedStaff, totalCost
       })
       .from(serviceRecords)
       .where(and(...conditions))

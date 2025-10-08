@@ -34,9 +34,27 @@ export async function GET(req: NextRequest) {
       .from(staff)
       .where(eq(staff.teamId, teamMember.teamId));
 
-    // Get paginated staff for this team
+    // Optimized query - only select fields needed for list view
     const items = await db
-      .select()
+      .select({
+        id: staff.id,
+        fullName: staff.fullName,
+        gender: staff.gender,
+        phoneNumber: staff.phoneNumber,
+        email: staff.email,
+        address: staff.address,
+        role: staff.role,
+        department: staff.department,
+        joiningDate: staff.joiningDate,
+        status: staff.status,
+        shiftTime: staff.shiftTime,
+        salary: staff.salary,
+        paymentType: staff.paymentType,
+        lastPaymentDate: staff.lastPaymentDate,
+        tasksCompleted: staff.tasksCompleted,
+        createdAt: staff.createdAt,
+        // Exclude heavy fields: teamId, updatedAt, dateOfBirth, emergencyContactName, emergencyContactPhone, relationship
+      })
       .from(staff)
       .where(eq(staff.teamId, teamMember.teamId))
       .orderBy(desc(staff.createdAt))
