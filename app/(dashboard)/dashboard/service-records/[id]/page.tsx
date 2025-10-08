@@ -294,24 +294,35 @@ export default function ServiceRecordDetailPage({
             <div className="flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-red-600" />
               <CardTitle className="text-xl font-semibold">
-                Before Service Images
+                Before Service Images ({record.beforeImages.length})
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {record.beforeImages.map((image: string, index: number) => (
-                <div key={index} className="group relative">
-                  <img
-                    src={image}
-                    alt={`Before service ${index + 1}`}
-                    loading="lazy"
-                    className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-orange-400 transition-all cursor-pointer"
-                    onClick={() => window.open(image, "_blank")}
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 rounded-lg transition-all" />
-                </div>
-              ))}
+              {record.beforeImages.map((image: string, index: number) => {
+                if (!image || image.trim() === "") {
+                  return null;
+                }
+                return (
+                  <div key={index} className="relative">
+                    <img
+                      src={image}
+                      alt={`Before service ${index + 1}`}
+                      className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-orange-400 transition-all cursor-pointer"
+                      onClick={() => window.open(image, "_blank")}
+                      onError={(e) => {
+                        console.error(
+                          "Failed to load image:",
+                          image.substring(0, 100)
+                        );
+                        e.currentTarget.src =
+                          "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBGYWlsZWQ8L3RleHQ+PC9zdmc+";
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -324,24 +335,35 @@ export default function ServiceRecordDetailPage({
             <div className="flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-green-600" />
               <CardTitle className="text-xl font-semibold">
-                After Service Images
+                After Service Images ({record.afterImages.length})
               </CardTitle>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {record.afterImages.map((image: string, index: number) => (
-                <div key={index} className="group relative">
-                  <img
-                    src={image}
-                    alt={`After service ${index + 1}`}
-                    loading="lazy"
-                    className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-green-400 transition-all cursor-pointer"
-                    onClick={() => window.open(image, "_blank")}
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 rounded-lg transition-all" />
-                </div>
-              ))}
+              {record.afterImages.map((image: string, index: number) => {
+                if (!image || image.trim() === "") {
+                  return null;
+                }
+                return (
+                  <div key={index} className="relative">
+                    <img
+                      src={image}
+                      alt={`After service ${index + 1}`}
+                      className="w-full h-48 object-cover rounded-lg border-2 border-gray-200 hover:border-green-400 transition-all cursor-pointer"
+                      onClick={() => window.open(image, "_blank")}
+                      onError={(e) => {
+                        console.error(
+                          "Failed to load image:",
+                          image.substring(0, 100)
+                        );
+                        e.currentTarget.src =
+                          "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2YzZjRmNiIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5Y2EzYWYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZSBGYWlsZWQ8L3RleHQ+PC9zdmc+";
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

@@ -3,7 +3,12 @@ import { db } from "@/lib/db/drizzle";
 import { serviceRecords, staff } from "@/lib/db/schema";
 import { getUser, getTeamForUser } from "@/lib/db/queries";
 import { eq, and, sql } from "drizzle-orm";
-import { uploadMultipleImages, isCloudinaryConfigured } from "@/lib/cloudinary";
+import {
+  uploadMultipleImages,
+  isCloudinaryConfigured,
+  deleteImageFromCloudinary,
+  extractPublicId,
+} from "@/lib/cloudinary";
 
 // GET /api/service-records/[id] - Get single service record
 export async function GET(
@@ -179,6 +184,47 @@ export async function PUT(
       }
     }
 
+    // Delete removed images from Cloudinary
+    if (isCloudinaryConfigured()) {
+      const oldBeforeImages = (existingRecord.beforeImages as string[]) || [];
+      const oldAfterImages = (existingRecord.afterImages as string[]) || [];
+      const newBeforeImages = beforeImageUrls || [];
+      const newAfterImages = afterImageUrls || [];
+
+      // Find images that were removed
+      const removedBeforeImages = oldBeforeImages.filter(
+        (oldUrl: string) => !newBeforeImages.includes(oldUrl)
+      );
+      const removedAfterImages = oldAfterImages.filter(
+        (oldUrl: string) => !newAfterImages.includes(oldUrl)
+      );
+
+      const allRemovedImages = [...removedBeforeImages, ...removedAfterImages];
+
+      if (allRemovedImages.length > 0) {
+        console.log(
+          `🗑️  Deleting ${allRemovedImages.length} removed images from Cloudinary...`
+        );
+
+        // Delete removed images from Cloudinary
+        for (const imageUrl of allRemovedImages) {
+          if (imageUrl.startsWith("https://res.cloudinary.com")) {
+            try {
+              const publicId = extractPublicId(imageUrl);
+              await deleteImageFromCloudinary(publicId);
+              console.log(
+                "✅ Deleted removed image from Cloudinary:",
+                publicId
+              );
+            } catch (error) {
+              console.error("⚠️  Failed to delete image:", error);
+              // Continue anyway - don't fail the update operation
+            }
+          }
+        }
+      }
+    }
+
     const [updatedRecord] = await db
       .update(serviceRecords)
       .set({
@@ -266,6 +312,45 @@ export async function DELETE(
 
     const { id } = await params;
     const recordId = parseInt(id);
+
+    // Get the record first to access images
+    const [record] = await db
+      .select()
+      .from(serviceRecords)
+      .where(
+        and(eq(serviceRecords.id, recordId), eq(serviceRecords.teamId, team.id))
+      )
+      .limit(1);
+
+    if (!record) {
+      return NextResponse.json({ error: "Record not found" }, { status: 404 });
+    }
+
+    // Delete images from Cloudinary (if configured)
+    if (isCloudinaryConfigured()) {
+      const allImages = [
+        ...(record.beforeImages || []),
+        ...(record.afterImages || []),
+      ];
+
+      console.log(`🗑️  Deleting ${allImages.length} images from Cloudinary...`);
+
+      for (const imageUrl of allImages) {
+        // Only delete Cloudinary URLs (not base64)
+        if (imageUrl.startsWith("https://res.cloudinary.com")) {
+          try {
+            const publicId = extractPublicId(imageUrl);
+            await deleteImageFromCloudinary(publicId);
+            console.log("✅ Deleted from Cloudinary:", publicId);
+          } catch (error) {
+            console.error("⚠️  Failed to delete image from Cloudinary:", error);
+            // Continue anyway - don't fail the delete operation
+          }
+        }
+      }
+    }
+
+    // Delete the database record
     await db
       .delete(serviceRecords)
       .where(
