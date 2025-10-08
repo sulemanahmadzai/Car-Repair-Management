@@ -1,12 +1,27 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Lock, Trash2, Loader2 } from 'lucide-react';
-import { useActionState } from 'react';
-import { updatePassword, deleteAccount } from '@/app/(login)/actions';
+import { useActionState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Lock, Trash2, Loader2, User } from "lucide-react";
+import {
+  updateAccount,
+  updatePassword,
+  deleteAccount,
+} from "@/app/(login)/actions";
+import { User as UserType } from "@/lib/db/schema";
+import useSWR from "swr";
+import { Suspense } from "react";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+type ActionState = {
+  name?: string;
+  error?: string;
+  success?: string;
+};
 
 type PasswordState = {
   currentPassword?: string;
@@ -22,7 +37,65 @@ type DeleteState = {
   success?: string;
 };
 
-export default function SecurityPage() {
+type AccountFormProps = {
+  state: ActionState;
+  nameValue?: string;
+  emailValue?: string;
+};
+
+function AccountForm({
+  state,
+  nameValue = "",
+  emailValue = "",
+}: AccountFormProps) {
+  return (
+    <>
+      <div>
+        <Label htmlFor="name" className="mb-2">
+          Name
+        </Label>
+        <Input
+          id="name"
+          name="name"
+          placeholder="Enter your name"
+          defaultValue={state.name || nameValue}
+          required
+        />
+      </div>
+      <div>
+        <Label htmlFor="email" className="mb-2">
+          Email
+        </Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="Enter your email"
+          defaultValue={emailValue}
+          required
+        />
+      </div>
+    </>
+  );
+}
+
+function AccountFormWithData({ state }: { state: ActionState }) {
+  const { data: user } = useSWR<UserType>("/api/user", fetcher);
+  return (
+    <AccountForm
+      state={state}
+      nameValue={user?.name ?? ""}
+      emailValue={user?.email ?? ""}
+    />
+  );
+}
+
+export default function SettingsPage() {
+  const [accountState, accountAction, isAccountPending] = useActionState<
+    ActionState,
+    FormData
+  >(updateAccount, {});
+
   const [passwordState, passwordAction, isPasswordPending] = useActionState<
     PasswordState,
     FormData
@@ -35,12 +108,54 @@ export default function SecurityPage() {
 
   return (
     <section className="flex-1 p-4 lg:p-8">
-      <h1 className="text-lg lg:text-2xl font-medium bold text-gray-900 mb-6">
-        Security Settings
+      <h1 className="text-lg lg:text-2xl font-medium text-gray-900 mb-6">
+        Settings
       </h1>
+
+      {/* Account Information */}
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Password</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Account Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form className="space-y-4" action={accountAction}>
+            <Suspense fallback={<AccountForm state={accountState} />}>
+              <AccountFormWithData state={accountState} />
+            </Suspense>
+            {accountState.error && (
+              <p className="text-red-500 text-sm">{accountState.error}</p>
+            )}
+            {accountState.success && (
+              <p className="text-green-500 text-sm">{accountState.success}</p>
+            )}
+            <Button
+              type="submit"
+              className="bg-orange-500 hover:bg-orange-600 text-white"
+              disabled={isAccountPending}
+            >
+              {isAccountPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Password */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="w-5 h-5" />
+            Password
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" action={passwordAction}>
@@ -115,9 +230,13 @@ export default function SecurityPage() {
         </CardContent>
       </Card>
 
+      {/* Delete Account */}
       <Card>
         <CardHeader>
-          <CardTitle>Delete Account</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-red-600">
+            <Trash2 className="w-5 h-5" />
+            Delete Account
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-gray-500 mb-4">

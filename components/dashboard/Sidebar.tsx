@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Users,
   Settings,
-  Shield,
   ChevronRight,
   Home,
   Briefcase,
@@ -32,11 +31,6 @@ const menuItems: MenuItem[] = [
     icon: <LayoutDashboard className="w-5 h-5" />,
   },
   {
-    title: "General",
-    href: "/dashboard/general",
-    icon: <Home className="w-5 h-5" />,
-  },
-  {
     title: "Customers",
     href: "/dashboard/customers",
     icon: <Users className="w-5 h-5" />,
@@ -57,9 +51,9 @@ const menuItems: MenuItem[] = [
     icon: <Wrench className="w-5 h-5" />,
   },
   {
-    title: "Security",
-    href: "/dashboard/security",
-    icon: <Shield className="w-5 h-5" />,
+    title: "Settings",
+    href: "/dashboard/settings",
+    icon: <Settings className="w-5 h-5" />,
   },
 ];
 
