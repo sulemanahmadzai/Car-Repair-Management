@@ -51,9 +51,14 @@ export default function StaffPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const { data: staff, error, mutate } = useSWR("/api/staff", fetcher);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const { data, error, mutate } = useSWR(
+    `/api/staff?page=${page}&pageSize=${pageSize}`,
+    fetcher
+  );
 
-  const filteredStaff = staff?.filter((member: Staff) => {
+  const filteredStaff = data?.items?.filter((member: Staff) => {
     const matchesSearch =
       member.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       member.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -145,7 +150,7 @@ export default function StaffPage() {
           <CardTitle className="text-xl font-semibold">Staff List</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {!staff ? (
+          {!data ? (
             <TableSkeleton />
           ) : filteredStaff?.length === 0 ? (
             <div className="text-center py-12">
@@ -299,6 +304,40 @@ export default function StaffPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {data && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Page {page} of{" "}
+            {Math.max(1, Math.ceil((data.total || 0) / pageSize))}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Prev
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const totalPages = Math.max(
+                  1,
+                  Math.ceil((data.total || 0) / pageSize)
+                );
+                setPage((p) => Math.min(totalPages, p + 1));
+              }}
+              disabled={
+                page >= Math.max(1, Math.ceil((data.total || 0) / pageSize))
+              }
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

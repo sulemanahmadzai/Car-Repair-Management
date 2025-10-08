@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/drizzle";
 import { staff } from "@/lib/db/schema";
 import { getUser } from "@/lib/db/queries";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 // GET all staff for the user's team
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const user = await getUser();
     if (!user) {
@@ -21,14 +21,29 @@ export async function GET() {
       return NextResponse.json({ error: "No team found" }, { status: 404 });
     }
 
-    // Get all staff for this team
-    const staffList = await db
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
+    const pageSize = Math.min(
+      Math.max(parseInt(searchParams.get("pageSize") || "10"), 1),
+      100
+    );
+    const offset = (page - 1) * pageSize;
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(staff)
+      .where(eq(staff.teamId, teamMember.teamId));
+
+    // Get paginated staff for this team
+    const items = await db
       .select()
       .from(staff)
       .where(eq(staff.teamId, teamMember.teamId))
-      .orderBy(desc(staff.createdAt));
+      .orderBy(desc(staff.createdAt))
+      .limit(pageSize)
+      .offset(offset);
 
-    return NextResponse.json(staffList);
+    return NextResponse.json({ items, total: Number(count), page, pageSize });
   } catch (error) {
     console.error("Error fetching staff:", error);
     return NextResponse.json(

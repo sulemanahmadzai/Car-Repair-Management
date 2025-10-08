@@ -34,13 +34,17 @@ export default function ServiceRecordsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("All");
 
-  const {
-    data: records,
-    error,
-    mutate,
-  } = useSWR("/api/service-records", fetcher);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const { data, error, mutate } = useSWR(
+    `/api/service-records?page=${page}&pageSize=${pageSize}` +
+      (selectedType !== "All"
+        ? `&serviceType=${encodeURIComponent(selectedType)}`
+        : ""),
+    fetcher
+  );
 
-  const filteredRecords = records?.filter((record: any) => {
+  const filteredRecords = data?.items?.filter((record: any) => {
     const matchesSearch =
       record.vehicleReg.toLowerCase().includes(searchQuery.toLowerCase()) ||
       record.serviceType.toLowerCase().includes(searchQuery.toLowerCase());
@@ -137,7 +141,7 @@ export default function ServiceRecordsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {!records ? (
+          {!data ? (
             <TableSkeleton />
           ) : filteredRecords?.length === 0 ? (
             <div className="text-center py-12">
@@ -251,6 +255,40 @@ export default function ServiceRecordsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {data && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Page {page} of{" "}
+            {Math.max(1, Math.ceil((data.total || 0) / pageSize))}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Prev
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const totalPages = Math.max(
+                  1,
+                  Math.ceil((data.total || 0) / pageSize)
+                );
+                setPage((p) => Math.min(totalPages, p + 1));
+              }}
+              disabled={
+                page >= Math.max(1, Math.ceil((data.total || 0) / pageSize))
+              }
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

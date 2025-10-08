@@ -54,10 +54,12 @@ export default function BookingsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [serviceFilter, setServiceFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     filterBookings();
@@ -65,10 +67,12 @@ export default function BookingsPage() {
 
   const fetchBookings = async () => {
     try {
-      const response = await fetch("/api/bookings");
+      const response = await fetch(
+        `/api/bookings?page=${page}&pageSize=${pageSize}`
+      );
       const data = await response.json();
       if (data.success) {
-        setBookings(data.bookings);
+        setBookings(data.items);
       }
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -376,8 +380,22 @@ export default function BookingsPage() {
       </div>
 
       {/* Results Summary */}
-      <div className="mt-4 text-sm text-gray-600 text-center">
-        Showing {filteredBookings.length} of {bookings.length} bookings
+      <div className="mt-4 flex items-center justify-center gap-4">
+        <Button
+          variant="outline"
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+        >
+          Prev
+        </Button>
+        <span className="text-sm text-gray-600">Page {page}</span>
+        <Button
+          variant="outline"
+          onClick={() => setPage((p) => p + 1)}
+          disabled={bookings.length < pageSize}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

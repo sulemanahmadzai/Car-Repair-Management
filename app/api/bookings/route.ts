@@ -79,17 +79,33 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const { desc } = await import("drizzle-orm");
+    const { desc, sql } = await import("drizzle-orm");
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
+    const pageSize = Math.min(
+      Math.max(parseInt(searchParams.get("pageSize") || "10"), 1),
+      100
+    );
+    const offset = (page - 1) * pageSize;
 
-    // Get all bookings (for admin dashboard), newest first
-    const allBookings = await db
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(bookings);
+
+    // Get paginated bookings, newest first
+    const items = await db
       .select()
       .from(bookings)
-      .orderBy(desc(bookings.createdAt));
+      .orderBy(desc(bookings.createdAt))
+      .limit(pageSize)
+      .offset(offset);
 
     return NextResponse.json({
       success: true,
-      bookings: allBookings,
+      items,
+      total: Number(count),
+      page,
+      pageSize,
     });
   } catch (error) {
     console.error("Error fetching bookings:", error);

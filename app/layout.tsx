@@ -2,7 +2,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Manrope } from "next/font/google";
 import { getUser, getTeamForUser } from "@/lib/db/queries";
-import { SWRConfig } from "swr";
+import SWRProvider from "@/components/providers/SWRProvider";
 
 export const metadata: Metadata = {
   title: "Next.js SaaS Starter",
@@ -30,16 +30,14 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-[100dvh] bg-gray-50">
-        <SWRConfig
-          value={{
-            fallback: {
-              "/api/user": user,
-              "/api/team": team,
-            },
+        <SWRProvider
+          fallback={{
+            "/api/user": user,
+            "/api/team": team,
           }}
         >
           {children}
-        </SWRConfig>
+        </SWRProvider>
       </body>
     </html>
   );

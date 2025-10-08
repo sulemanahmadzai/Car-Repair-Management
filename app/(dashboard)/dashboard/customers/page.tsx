@@ -43,9 +43,14 @@ export default function CustomersPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: customers, error, mutate } = useSWR("/api/customers", fetcher);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const { data, error, mutate } = useSWR(
+    `/api/customers?page=${page}&pageSize=${pageSize}`,
+    fetcher
+  );
 
-  const filteredCustomers = customers?.filter((customer: Customer) => {
+  const filteredCustomers = data?.items?.filter((customer: Customer) => {
     const matchesSearch =
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.registrationNumber
@@ -125,7 +130,7 @@ export default function CustomersPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {!customers ? (
+          {!data ? (
             <TableSkeleton />
           ) : filteredCustomers?.length === 0 ? (
             <div className="text-center py-12">
@@ -311,7 +316,40 @@ export default function CustomersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {data && (
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Page {page} of{" "}
+            {Math.max(1, Math.ceil((data.total || 0) / pageSize))}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Prev
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const totalPages = Math.max(
+                  1,
+                  Math.ceil((data.total || 0) / pageSize)
+                );
+                setPage((p) => Math.min(totalPages, p + 1));
+              }}
+              disabled={
+                page >= Math.max(1, Math.ceil((data.total || 0) / pageSize))
+              }
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

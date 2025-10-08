@@ -29,6 +29,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const vehicleReg = searchParams.get("vehicleReg");
     const serviceType = searchParams.get("serviceType");
+    const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
+    const pageSize = Math.min(
+      Math.max(parseInt(searchParams.get("pageSize") || "10"), 1),
+      100
+    );
+    const offset = (page - 1) * pageSize;
 
     let query = db
       .select()
@@ -46,8 +52,14 @@ export async function GET(request: Request) {
       conditions.push(eq(serviceRecords.serviceType, serviceType));
     }
 
+    // Count total
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(serviceRecords)
+      .where(and(...conditions));
+
     // Exclude image fields for better performance in list view
-    const records = await db
+    const items = await db
       .select({
         id: serviceRecords.id,
         teamId: serviceRecords.teamId,
@@ -67,9 +79,11 @@ export async function GET(request: Request) {
       })
       .from(serviceRecords)
       .where(and(...conditions))
-      .orderBy(desc(serviceRecords.createdAt));
+      .orderBy(desc(serviceRecords.createdAt))
+      .limit(pageSize)
+      .offset(offset);
 
-    return NextResponse.json(records);
+    return NextResponse.json({ items, total: Number(count), page, pageSize });
   } catch (error) {
     console.error("Failed to fetch service records:", error);
     return NextResponse.json(
