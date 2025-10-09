@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/drizzle";
 import { bookings } from "@/lib/db/schema";
+import {
+  getCached,
+  invalidateBookingCache,
+  CACHE_KEYS,
+  CACHE_TTL,
+} from "@/lib/cache";
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,6 +66,9 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
+    // Invalidate cache after creating booking
+    await invalidateBookingCache();
+
     return NextResponse.json(
       {
         success: true,
@@ -88,36 +97,50 @@ export async function GET(request: NextRequest) {
     );
     const offset = (page - 1) * pageSize;
 
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(bookings);
+    // Cache the count
+    const count = await getCached(
+      CACHE_KEYS.BOOKINGS_COUNT(),
+      async () => {
+        const [{ count }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(bookings);
+        return Number(count);
+      },
+      CACHE_TTL.SHORT // Bookings change frequently
+    );
 
-    // Optimized query - only select fields needed for list view
-    const items = await db
-      .select({
-        id: bookings.id,
-        firstName: bookings.firstName,
-        lastName: bookings.lastName,
-        phone: bookings.phone,
-        email: bookings.email,
-        carReg: bookings.carReg,
-        services: bookings.services,
-        bookDate: bookings.bookDate,
-        bookTime: bookings.bookTime,
-        message: bookings.message,
-        status: bookings.status,
-        createdAt: bookings.createdAt,
-        // Exclude heavy fields: updatedAt
-      })
-      .from(bookings)
-      .orderBy(desc(bookings.createdAt))
-      .limit(pageSize)
-      .offset(offset);
+    // Cache the items
+    const items = await getCached(
+      CACHE_KEYS.BOOKINGS(page, pageSize),
+      async () => {
+        return await db
+          .select({
+            id: bookings.id,
+            firstName: bookings.firstName,
+            lastName: bookings.lastName,
+            phone: bookings.phone,
+            email: bookings.email,
+            carReg: bookings.carReg,
+            services: bookings.services,
+            bookDate: bookings.bookDate,
+            bookTime: bookings.bookTime,
+            message: bookings.message,
+            status: bookings.status,
+            createdAt: bookings.createdAt,
+            // Exclude heavy fields: updatedAt
+          })
+          .from(bookings)
+          .orderBy(desc(bookings.createdAt))
+          .limit(pageSize)
+          .offset(offset);
+      },
+      CACHE_TTL.SHORT // Bookings change frequently
+    );
 
     return NextResponse.json({
       success: true,
       items,
-      total: Number(count),
+      total: count,
       page,
       pageSize,
     });

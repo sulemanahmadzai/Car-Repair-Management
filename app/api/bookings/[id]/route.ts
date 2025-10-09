@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db/drizzle";
 import { bookings } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { invalidateBookingCache } from "@/lib/cache";
 
 export async function GET(
   request: NextRequest,
@@ -87,6 +88,9 @@ export async function PATCH(
       .where(eq(bookings.id, bookingId))
       .returning();
 
+    // Invalidate cache after updating booking
+    await invalidateBookingCache();
+
     return NextResponse.json({
       success: true,
       message: "Booking status updated successfully",
@@ -128,6 +132,9 @@ export async function DELETE(
 
     // Delete booking
     await db.delete(bookings).where(eq(bookings.id, bookingId));
+
+    // Invalidate cache after deleting booking
+    await invalidateBookingCache();
 
     return NextResponse.json({
       success: true,

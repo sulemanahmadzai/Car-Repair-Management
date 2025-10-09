@@ -56,3 +56,4 @@ ON team_members(user_id);
 
 CREATE INDEX IF NOT EXISTS idx_team_members_team_id 
 ON team_members(team_id);
+

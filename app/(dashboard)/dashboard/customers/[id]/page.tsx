@@ -133,11 +133,11 @@ export default function CustomerDetailPage({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-2xl">
-                {customer.name.charAt(0).toUpperCase()}
+                {(customer.name?.charAt(0) || "?").toUpperCase()}
               </div>
               <div>
                 <CardTitle className="text-2xl font-bold">
-                  {customer.name}
+                  {customer.name || "Unnamed Customer"}
                 </CardTitle>
                 <p className="text-orange-50 mt-1">
                   {customer.email || "No email provided"}

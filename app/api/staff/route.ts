@@ -3,6 +3,12 @@ import { db } from "@/lib/db/drizzle";
 import { staff } from "@/lib/db/schema";
 import { getUser } from "@/lib/db/queries";
 import { eq, and, desc, sql } from "drizzle-orm";
+import {
+  getCached,
+  invalidateTeamCache,
+  CACHE_KEYS,
+  CACHE_TTL,
+} from "@/lib/cache";
 
 // GET all staff for the user's team
 export async function GET(req: NextRequest) {
@@ -29,39 +35,53 @@ export async function GET(req: NextRequest) {
     );
     const offset = (page - 1) * pageSize;
 
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(staff)
-      .where(eq(staff.teamId, teamMember.teamId));
+    // Cache the count
+    const count = await getCached(
+      CACHE_KEYS.STAFF_COUNT(teamMember.teamId),
+      async () => {
+        const [{ count }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(staff)
+          .where(eq(staff.teamId, teamMember.teamId));
+        return Number(count);
+      },
+      CACHE_TTL.MEDIUM
+    );
 
-    // Optimized query - only select fields needed for list view
-    const items = await db
-      .select({
-        id: staff.id,
-        fullName: staff.fullName,
-        gender: staff.gender,
-        phoneNumber: staff.phoneNumber,
-        email: staff.email,
-        address: staff.address,
-        role: staff.role,
-        department: staff.department,
-        joiningDate: staff.joiningDate,
-        status: staff.status,
-        shiftTime: staff.shiftTime,
-        salary: staff.salary,
-        paymentType: staff.paymentType,
-        lastPaymentDate: staff.lastPaymentDate,
-        tasksCompleted: staff.tasksCompleted,
-        createdAt: staff.createdAt,
-        // Exclude heavy fields: teamId, updatedAt, dateOfBirth, emergencyContactName, emergencyContactPhone, relationship
-      })
-      .from(staff)
-      .where(eq(staff.teamId, teamMember.teamId))
-      .orderBy(desc(staff.createdAt))
-      .limit(pageSize)
-      .offset(offset);
+    // Cache the items
+    const items = await getCached(
+      CACHE_KEYS.STAFF(teamMember.teamId, page, pageSize),
+      async () => {
+        return await db
+          .select({
+            id: staff.id,
+            fullName: staff.fullName,
+            gender: staff.gender,
+            phoneNumber: staff.phoneNumber,
+            email: staff.email,
+            address: staff.address,
+            role: staff.role,
+            department: staff.department,
+            joiningDate: staff.joiningDate,
+            status: staff.status,
+            shiftTime: staff.shiftTime,
+            salary: staff.salary,
+            paymentType: staff.paymentType,
+            lastPaymentDate: staff.lastPaymentDate,
+            tasksCompleted: staff.tasksCompleted,
+            createdAt: staff.createdAt,
+            // Exclude heavy fields: teamId, updatedAt, dateOfBirth, emergencyContactName, emergencyContactPhone, relationship
+          })
+          .from(staff)
+          .where(eq(staff.teamId, teamMember.teamId))
+          .orderBy(desc(staff.createdAt))
+          .limit(pageSize)
+          .offset(offset);
+      },
+      CACHE_TTL.MEDIUM
+    );
 
-    return NextResponse.json({ items, total: Number(count), page, pageSize });
+    return NextResponse.json({ items, total: count, page, pageSize });
   } catch (error) {
     console.error("Error fetching staff:", error);
     return NextResponse.json(
@@ -144,6 +164,9 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
+    // Invalidate cache after creating staff
+    await invalidateTeamCache(teamMember.teamId);
+
     return NextResponse.json(newStaff, { status: 201 });
   } catch (error) {
     console.error("Error creating staff:", error);
@@ -198,6 +221,9 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Invalidate cache after updating staff
+    await invalidateTeamCache(teamMember.teamId);
+
     return NextResponse.json(updatedStaff);
   } catch (error) {
     console.error("Error updating staff:", error);
@@ -249,6 +275,9 @@ export async function DELETE(req: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Invalidate cache after deleting staff
+    await invalidateTeamCache(teamMember.teamId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -3,6 +3,12 @@ import { db } from "@/lib/db/drizzle";
 import { customers } from "@/lib/db/schema";
 import { getUser } from "@/lib/db/queries";
 import { eq, and, desc, sql } from "drizzle-orm";
+import {
+  getCached,
+  invalidateTeamCache,
+  CACHE_KEYS,
+  CACHE_TTL,
+} from "@/lib/cache";
 
 // GET all customers for the user's team
 export async function GET(req: NextRequest) {
@@ -22,6 +28,34 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
+    const idParam = searchParams.get("id");
+
+    // If id is provided, return single customer (with caching)
+    if (idParam) {
+      const id = parseInt(idParam);
+      if (Number.isNaN(id)) {
+        return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+      }
+
+      const item = await getCached(
+        CACHE_KEYS.CUSTOMER_BY_ID(id),
+        async () => {
+          const rows = await db
+            .select()
+            .from(customers)
+            .where(
+              and(eq(customers.id, id), eq(customers.teamId, teamMember.teamId))
+            )
+            .limit(1);
+          return rows[0] || null;
+        },
+        CACHE_TTL.MEDIUM
+      );
+
+      if (!item)
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json(item);
+    }
     const page = Math.max(parseInt(searchParams.get("page") || "1"), 1);
     const pageSize = Math.min(
       Math.max(parseInt(searchParams.get("pageSize") || "10"), 1),
@@ -29,36 +63,50 @@ export async function GET(req: NextRequest) {
     );
     const offset = (page - 1) * pageSize;
 
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(customers)
-      .where(eq(customers.teamId, teamMember.teamId));
+    // Cache the count
+    const count = await getCached(
+      CACHE_KEYS.CUSTOMERS_COUNT(teamMember.teamId),
+      async () => {
+        const [{ count }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(customers)
+          .where(eq(customers.teamId, teamMember.teamId));
+        return Number(count);
+      },
+      CACHE_TTL.MEDIUM
+    );
 
-    // Optimized query - only select fields needed for list view
-    const items = await db
-      .select({
-        id: customers.id,
-        name: customers.name,
-        mobileNumber: customers.mobileNumber,
-        email: customers.email,
-        address: customers.address,
-        registrationNumber: customers.registrationNumber,
-        make: customers.make,
-        model: customers.model,
-        colour: customers.colour,
-        fuelType: customers.fuelType,
-        motExpiry: customers.motExpiry,
-        taxDueDate: customers.taxDueDate,
-        createdAt: customers.createdAt,
-        // Exclude heavy fields: teamId, updatedAt
-      })
-      .from(customers)
-      .where(eq(customers.teamId, teamMember.teamId))
-      .orderBy(desc(customers.createdAt))
-      .limit(pageSize)
-      .offset(offset);
+    // Cache the items
+    const items = await getCached(
+      CACHE_KEYS.CUSTOMERS(teamMember.teamId, page, pageSize),
+      async () => {
+        return await db
+          .select({
+            id: customers.id,
+            name: customers.name,
+            mobileNumber: customers.mobileNumber,
+            email: customers.email,
+            address: customers.address,
+            registrationNumber: customers.registrationNumber,
+            make: customers.make,
+            model: customers.model,
+            colour: customers.colour,
+            fuelType: customers.fuelType,
+            motExpiry: customers.motExpiry,
+            taxDueDate: customers.taxDueDate,
+            createdAt: customers.createdAt,
+            // Exclude heavy fields: teamId, updatedAt
+          })
+          .from(customers)
+          .where(eq(customers.teamId, teamMember.teamId))
+          .orderBy(desc(customers.createdAt))
+          .limit(pageSize)
+          .offset(offset);
+      },
+      CACHE_TTL.MEDIUM
+    );
 
-    return NextResponse.json({ items, total: Number(count), page, pageSize });
+    return NextResponse.json({ items, total: count, page, pageSize });
   } catch (error) {
     console.error("Error fetching customers:", error);
     return NextResponse.json(
@@ -127,6 +175,9 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
+    // Invalidate cache after creating customer
+    await invalidateTeamCache(teamMember.teamId);
+
     return NextResponse.json(newCustomer, { status: 201 });
   } catch (error) {
     console.error("Error creating customer:", error);
@@ -187,6 +238,9 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Invalidate cache after updating customer
+    await invalidateTeamCache(teamMember.teamId);
+
     return NextResponse.json(updatedCustomer);
   } catch (error) {
     console.error("Error updating customer:", error);
@@ -241,6 +295,9 @@ export async function DELETE(req: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Invalidate cache after deleting customer
+    await invalidateTeamCache(teamMember.teamId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

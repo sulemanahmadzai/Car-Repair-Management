@@ -3,6 +3,7 @@ import { db } from "./drizzle";
 import { activityLogs, teamMembers, teams, users } from "./schema";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth/session";
+import { getCached, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 
 export async function getUser() {
   const sessionCookie = (await cookies()).get("session");
@@ -23,17 +24,27 @@ export async function getUser() {
     return null;
   }
 
-  const user = await db
-    .select()
-    .from(users)
-    .where(and(eq(users.id, sessionData.user.id), isNull(users.deletedAt)))
-    .limit(1);
+  // Cache user data for the session duration
+  const userId = sessionData.user.id;
+  const user = await getCached(
+    CACHE_KEYS.USER(userId),
+    async () => {
+      const result = await db
+        .select()
+        .from(users)
+        .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+        .limit(1);
 
-  if (user.length === 0) {
-    return null;
-  }
+      if (result.length === 0) {
+        return null;
+      }
 
-  return user[0];
+      return result[0];
+    },
+    CACHE_TTL.USER_SESSION // 30 minutes cache for user session
+  );
+
+  return user;
 }
 
 // STRIPE QUERY FUNCTIONS COMMENTED OUT - TO BE ENABLED LATER
@@ -68,17 +79,23 @@ export async function updateTeamSubscription(
 */
 
 export async function getUserWithTeam(userId: number) {
-  const result = await db
-    .select({
-      user: users,
-      teamId: teamMembers.teamId,
-    })
-    .from(users)
-    .leftJoin(teamMembers, eq(users.id, teamMembers.userId))
-    .where(eq(users.id, userId))
-    .limit(1);
+  return await getCached(
+    CACHE_KEYS.USER_WITH_TEAM(userId),
+    async () => {
+      const result = await db
+        .select({
+          user: users,
+          teamId: teamMembers.teamId,
+        })
+        .from(users)
+        .leftJoin(teamMembers, eq(users.id, teamMembers.userId))
+        .where(eq(users.id, userId))
+        .limit(1);
 
-  return result[0];
+      return result[0];
+    },
+    CACHE_TTL.USER_SESSION
+  );
 }
 
 export async function getActivityLogs() {
@@ -87,19 +104,25 @@ export async function getActivityLogs() {
     throw new Error("User not authenticated");
   }
 
-  return await db
-    .select({
-      id: activityLogs.id,
-      action: activityLogs.action,
-      timestamp: activityLogs.timestamp,
-      ipAddress: activityLogs.ipAddress,
-      userName: users.name,
-    })
-    .from(activityLogs)
-    .leftJoin(users, eq(activityLogs.userId, users.id))
-    .where(eq(activityLogs.userId, user.id))
-    .orderBy(desc(activityLogs.timestamp))
-    .limit(10);
+  return await getCached(
+    CACHE_KEYS.ACTIVITY_LOGS(user.id),
+    async () => {
+      return await db
+        .select({
+          id: activityLogs.id,
+          action: activityLogs.action,
+          timestamp: activityLogs.timestamp,
+          ipAddress: activityLogs.ipAddress,
+          userName: users.name,
+        })
+        .from(activityLogs)
+        .leftJoin(users, eq(activityLogs.userId, users.id))
+        .where(eq(activityLogs.userId, user.id))
+        .orderBy(desc(activityLogs.timestamp))
+        .limit(10);
+    },
+    CACHE_TTL.SHORT // Activity logs should be relatively fresh
+  );
 }
 
 export async function getTeamForUser() {
