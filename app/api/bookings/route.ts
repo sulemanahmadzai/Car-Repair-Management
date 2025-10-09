@@ -97,53 +97,44 @@ export async function GET(request: NextRequest) {
     );
     const offset = (page - 1) * pageSize;
 
-    // Cache the count
-    const count = await getCached(
-      CACHE_KEYS.BOOKINGS_COUNT(),
+    console.log(`[API bookings] page=${page} size=${pageSize}`);
+
+    // Cache both total and items together to cut Redis round trips
+    const { total, items } = await getCached(
+      `bookings:payload:${page}:${pageSize}`,
       async () => {
-        const [{ count }] = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(bookings);
-        return Number(count);
+        const start = Date.now();
+        const [countRows, list] = await Promise.all([
+          db.select({ count: sql<number>`count(*)` }).from(bookings),
+          db
+            .select({
+              id: bookings.id,
+              firstName: bookings.firstName,
+              lastName: bookings.lastName,
+              phone: bookings.phone,
+              email: bookings.email,
+              carReg: bookings.carReg,
+              services: bookings.services,
+              bookDate: bookings.bookDate,
+              bookTime: bookings.bookTime,
+              message: bookings.message,
+              status: bookings.status,
+              createdAt: bookings.createdAt,
+            })
+            .from(bookings)
+            .orderBy(desc(bookings.createdAt))
+            .limit(pageSize)
+            .offset(offset),
+        ]);
+        const ms = Date.now() - start;
+        console.log(`[DB bookings_payload] ${ms}ms`);
+        const total = Number(countRows[0]?.count ?? 0);
+        return { total, items: list };
       },
-      CACHE_TTL.SHORT // Bookings change frequently
+      CACHE_TTL.SHORT
     );
 
-    // Cache the items
-    const items = await getCached(
-      CACHE_KEYS.BOOKINGS(page, pageSize),
-      async () => {
-        return await db
-          .select({
-            id: bookings.id,
-            firstName: bookings.firstName,
-            lastName: bookings.lastName,
-            phone: bookings.phone,
-            email: bookings.email,
-            carReg: bookings.carReg,
-            services: bookings.services,
-            bookDate: bookings.bookDate,
-            bookTime: bookings.bookTime,
-            message: bookings.message,
-            status: bookings.status,
-            createdAt: bookings.createdAt,
-            // Exclude heavy fields: updatedAt
-          })
-          .from(bookings)
-          .orderBy(desc(bookings.createdAt))
-          .limit(pageSize)
-          .offset(offset);
-      },
-      CACHE_TTL.SHORT // Bookings change frequently
-    );
-
-    return NextResponse.json({
-      success: true,
-      items,
-      total: count,
-      page,
-      pageSize,
-    });
+    return NextResponse.json({ success: true, items, total, page, pageSize });
   } catch (error) {
     console.error("Error fetching bookings:", error);
     return NextResponse.json(

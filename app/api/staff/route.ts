@@ -35,14 +35,21 @@ export async function GET(req: NextRequest) {
     );
     const offset = (page - 1) * pageSize;
 
+    console.log(
+      `[API staff] team=${teamMember.teamId} page=${page} size=${pageSize}`
+    );
+
     // Cache the count
     const count = await getCached(
       CACHE_KEYS.STAFF_COUNT(teamMember.teamId),
       async () => {
+        const start = Date.now();
         const [{ count }] = await db
           .select({ count: sql<number>`count(*)` })
           .from(staff)
           .where(eq(staff.teamId, teamMember.teamId));
+        const ms = Date.now() - start;
+        console.log(`[DB staff_count team=${teamMember.teamId}] ${ms}ms`);
         return Number(count);
       },
       CACHE_TTL.MEDIUM
@@ -52,6 +59,7 @@ export async function GET(req: NextRequest) {
     const items = await getCached(
       CACHE_KEYS.STAFF(teamMember.teamId, page, pageSize),
       async () => {
+        const start = Date.now();
         return await db
           .select({
             id: staff.id,
@@ -76,7 +84,12 @@ export async function GET(req: NextRequest) {
           .where(eq(staff.teamId, teamMember.teamId))
           .orderBy(desc(staff.createdAt))
           .limit(pageSize)
-          .offset(offset);
+          .offset(offset)
+          .then((rows) => {
+            const ms = Date.now() - start;
+            console.log(`[DB staff_list team=${teamMember.teamId}] ${ms}ms`);
+            return rows;
+          });
       },
       CACHE_TTL.MEDIUM
     );

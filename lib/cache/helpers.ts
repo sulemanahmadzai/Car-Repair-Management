@@ -11,27 +11,44 @@ export async function getCached<T>(
 ): Promise<T> {
   // If Redis is not configured, just execute fallback
   if (!isRedisConfigured()) {
-    return fallback();
+    const start = Date.now();
+    const data = await fallback();
+    const ms = Date.now() - start;
+    console.log(`[Cache BYPASS] ${key} (redis disabled, fallback ${ms}ms)`);
+    return data;
   }
 
   try {
     // Try to get from cache
+    const startGet = Date.now();
     const cached = await redis.get<T>(key);
+    const getMs = Date.now() - startGet;
 
     if (cached !== null) {
-      console.log(`[Cache HIT] ${key}`);
+      console.log(`[Cache HIT] ${key} (get ${getMs}ms)`);
       return cached;
     }
 
-    console.log(`[Cache MISS] ${key}`);
+    console.log(`[Cache MISS] ${key} (get ${getMs}ms)`);
 
     // Cache miss - execute fallback and cache the result
+    const startFb = Date.now();
     const data = await fallback();
+    const fbMs = Date.now() - startFb;
 
     // Only cache if data is not null/undefined
     if (data !== null && data !== undefined) {
       // Upstash Redis handles JSON serialization automatically
+      const startSet = Date.now();
       await redis.setex(key, ttl, data);
+      const setMs = Date.now() - startSet;
+      console.log(
+        `[Cache SET] ${key} (ttl ${ttl}s, fallback ${fbMs}ms, set ${setMs}ms)`
+      );
+    } else {
+      console.log(
+        `[Cache SKIP SET] ${key} (fallback ${fbMs}ms, value is null/undefined)`
+      );
     }
 
     return data;

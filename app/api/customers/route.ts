@@ -37,9 +37,11 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Invalid id" }, { status: 400 });
       }
 
+      console.log(`[API customers:id] team=${teamMember.teamId} id=${id}`);
       const item = await getCached(
         CACHE_KEYS.CUSTOMER_BY_ID(id),
         async () => {
+          const start = Date.now();
           const rows = await db
             .select()
             .from(customers)
@@ -47,6 +49,8 @@ export async function GET(req: NextRequest) {
               and(eq(customers.id, id), eq(customers.teamId, teamMember.teamId))
             )
             .limit(1);
+          const ms = Date.now() - start;
+          console.log(`[DB customer_by_id team=${teamMember.teamId}] ${ms}ms`);
           return rows[0] || null;
         },
         CACHE_TTL.MEDIUM
@@ -63,14 +67,21 @@ export async function GET(req: NextRequest) {
     );
     const offset = (page - 1) * pageSize;
 
+    console.log(
+      `[API customers] team=${teamMember.teamId} page=${page} size=${pageSize}`
+    );
+
     // Cache the count
     const count = await getCached(
       CACHE_KEYS.CUSTOMERS_COUNT(teamMember.teamId),
       async () => {
+        const start = Date.now();
         const [{ count }] = await db
           .select({ count: sql<number>`count(*)` })
           .from(customers)
           .where(eq(customers.teamId, teamMember.teamId));
+        const ms = Date.now() - start;
+        console.log(`[DB customers_count team=${teamMember.teamId}] ${ms}ms`);
         return Number(count);
       },
       CACHE_TTL.MEDIUM
@@ -80,6 +91,7 @@ export async function GET(req: NextRequest) {
     const items = await getCached(
       CACHE_KEYS.CUSTOMERS(teamMember.teamId, page, pageSize),
       async () => {
+        const start = Date.now();
         return await db
           .select({
             id: customers.id,
@@ -101,7 +113,14 @@ export async function GET(req: NextRequest) {
           .where(eq(customers.teamId, teamMember.teamId))
           .orderBy(desc(customers.createdAt))
           .limit(pageSize)
-          .offset(offset);
+          .offset(offset)
+          .then((rows) => {
+            const ms = Date.now() - start;
+            console.log(
+              `[DB customers_list team=${teamMember.teamId}] ${ms}ms`
+            );
+            return rows;
+          });
       },
       CACHE_TTL.MEDIUM
     );

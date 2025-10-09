@@ -8,10 +8,7 @@ import { uploadMultipleImages, isCloudinaryConfigured } from "@/lib/cloudinary";
 // Configure route segment for larger payloads (images)
 export const maxDuration = 60; // 60 seconds timeout
 export const dynamic = "force-dynamic";
-// Increase body size limit for base64 images (App Router)
-export const bodyParser = {
-  sizeLimit: "10mb",
-};
+// Note: body size limits are not configurable via bodyParser in App Router
 
 // GET /api/service-records - Get all service records with optional filters
 export async function GET(request: Request) {

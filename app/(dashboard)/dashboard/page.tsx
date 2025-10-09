@@ -38,6 +38,12 @@ type ActionState = {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+// Extend team data with optional subscription fields that may not exist in the DB yet
+type TeamUiData = TeamDataWithMembers & {
+  planName?: string | null;
+  subscriptionStatus?: string | null;
+};
+
 function SubscriptionSkeleton() {
   return (
     <Card className="mb-8 h-[140px]">
@@ -49,7 +55,7 @@ function SubscriptionSkeleton() {
 }
 
 function ManageSubscription() {
-  const { data: teamData } = useSWR<TeamDataWithMembers>("/api/team", fetcher);
+  const { data: teamData } = useSWR<TeamUiData>("/api/team", fetcher);
 
   return (
     <Card className="mb-8">
@@ -105,7 +111,7 @@ function TeamMembersSkeleton() {
 }
 
 function TeamMembers() {
-  const { data: teamData } = useSWR<TeamDataWithMembers>("/api/team", fetcher);
+  const { data: teamData } = useSWR<TeamUiData>("/api/team", fetcher);
   const [removeState, removeAction, isRemovePending] = useActionState<
     ActionState,
     FormData
