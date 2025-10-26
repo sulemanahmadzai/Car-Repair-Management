@@ -7,71 +7,123 @@ const isLocalRedis = process.env.REDIS_URL?.startsWith("redis://");
 // Initialize Redis client based on environment
 let redisClient: any;
 
-if (isLocalRedis) {
-  // Use local Redis client for development
-  redisClient = createClient({
-    url: process.env.REDIS_URL!,
-  });
+try {
+  if (isLocalRedis) {
+    // Use local Redis client for development
+    redisClient = createClient({
+      url: process.env.REDIS_URL!,
+    });
 
-  // Connect to local Redis
-  redisClient.connect().catch(console.error);
-} else {
-  // Use Upstash Redis for production
-  redisClient = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL || "",
-    token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
-  });
+    // Connect to local Redis
+    redisClient.connect().catch((err: any) => {
+      console.error("[Redis Connection Error]:", err);
+    });
+  } else {
+    // Use Upstash Redis for production
+    const upstashUrl = process.env.UPSTASH_REDIS_REST_URL || "";
+    const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN || "";
+
+    if (upstashUrl && upstashToken) {
+      redisClient = new Redis({
+        url: upstashUrl,
+        token: upstashToken,
+      });
+    } else {
+      console.warn(
+        "[Redis Warning]: Upstash Redis not configured. Cache will be bypassed."
+      );
+      redisClient = null;
+    }
+  }
+} catch (error) {
+  console.error("[Redis Initialization Error]:", error);
+  redisClient = null;
 }
 
 // Create a unified Redis interface
 export const redis = {
   async get<T>(key: string): Promise<T | null> {
-    if (isLocalRedis) {
-      const result = await redisClient.get(key);
-      return result ? JSON.parse(result) : null;
-    } else {
-      return (await redisClient.get(key)) as T | null;
+    if (!redisClient) return null;
+
+    try {
+      if (isLocalRedis) {
+        const result = await redisClient.get(key);
+        return result ? JSON.parse(result as string) : null;
+      } else {
+        return (await redisClient.get(key)) as T | null;
+      }
+    } catch (error) {
+      console.error(`[Redis GET Error] ${key}:`, error);
+      return null;
     }
   },
 
   async setex(key: string, ttl: number, value: any): Promise<void> {
-    if (isLocalRedis) {
-      await redisClient.setEx(key, ttl, JSON.stringify(value));
-    } else {
-      await redisClient.setex(key, ttl, value);
+    if (!redisClient) return;
+
+    try {
+      if (isLocalRedis) {
+        await redisClient.setEx(key, ttl, JSON.stringify(value));
+      } else {
+        await redisClient.setex(key, ttl, value);
+      }
+    } catch (error) {
+      console.error(`[Redis SET Error] ${key}:`, error);
     }
   },
 
   async del(...keys: string[]): Promise<void> {
-    if (isLocalRedis) {
-      await redisClient.del(keys);
-    } else {
-      await redisClient.del(...keys);
+    if (!redisClient) return;
+
+    try {
+      if (isLocalRedis) {
+        await redisClient.del(keys);
+      } else {
+        await redisClient.del(...keys);
+      }
+    } catch (error) {
+      console.error(`[Redis DEL Error]:`, error);
     }
   },
 
   async keys(pattern: string): Promise<string[]> {
-    if (isLocalRedis) {
-      return await redisClient.keys(pattern);
-    } else {
-      return await redisClient.keys(pattern);
+    if (!redisClient) return [];
+
+    try {
+      if (isLocalRedis) {
+        return await redisClient.keys(pattern);
+      } else {
+        return await redisClient.keys(pattern);
+      }
+    } catch (error) {
+      console.error(`[Redis KEYS Error]:`, error);
+      return [];
     }
   },
 
   async flushdb(): Promise<void> {
-    if (isLocalRedis) {
-      await redisClient.flushDb();
-    } else {
-      await redisClient.flushdb();
+    if (!redisClient) return;
+
+    try {
+      if (isLocalRedis) {
+        await redisClient.flushDb();
+      } else {
+        await redisClient.flushdb();
+      }
+    } catch (error) {
+      console.error(`[Redis FLUSH Error]:`, error);
     }
   },
 };
 
 // Check if Redis is configured
 export const isRedisConfigured = () => {
-  return !!(
-    process.env.REDIS_URL ||
-    (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+  return (
+    !!(
+      process.env.REDIS_URL ||
+      (process.env.UPSTASH_REDIS_REST_URL &&
+        process.env.UPSTASH_REDIS_REST_TOKEN)
+    ) && redisClient !== null
   );
 };
 
