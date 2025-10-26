@@ -16,11 +16,7 @@ export default function HomePage() {
       <FeaturesSection />
       <AboutSection />
       <ServicesSection />
-      <StatsSection />
-      <WorkProcessSection />
       <TestimonialSection />
-      <BlogSection />
-      <ContactSection />
 
       {/* Client Section */}
       <section className="py-16 bg-white">

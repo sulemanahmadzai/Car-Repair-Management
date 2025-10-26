@@ -5,20 +5,14 @@ import { Phone, Mail, MapPin, Clock, Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ContactPage() {
-  const breadcrumbItems = [{ label: "Home", href: "/" }, { label: "Contact" }];
-
   return (
     <div className="bg-white">
-      {/* Breadcrumb */}
-      <BreadcrumbSection title="Contact Us" items={breadcrumbItems} />
-
-      {/* Enhanced Contact Form Section */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="w-full h-96 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg flex items-center justify-center">
-                <Car className="w-32 h-32 text-orange-500" />
+              <div className="w-full h-96 bg-gradient-to-b from-gray-700 to-gray-900 text-white rounded-lg flex items-center justify-center">
+                <Car className="w-32 h-32 text-gray-500" />
               </div>
             </div>
             <div>
@@ -30,32 +24,32 @@ export default function ContactPage() {
                   <input
                     type="text"
                     placeholder="Your Name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   />
                   <input
                     type="tel"
                     placeholder="Phone"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   />
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <input
                     type="email"
                     placeholder="Email"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   />
                   <input
                     type="text"
                     placeholder="Subject"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                   />
                 </div>
                 <textarea
                   placeholder="Message"
                   rows={5}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
                 />
-                <Button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3">
+                <Button className="bg-gray-500 hover:bg-gray-600 text-white px-8 py-3">
                   Send Message
                 </Button>
               </form>
@@ -69,7 +63,7 @@ export default function ContactPage() {
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-3 md:grid-cols-2 gap-8">
             <div className="bg-white p-8 rounded-lg shadow-lg text-center hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Phone className="w-8 h-8 text-white" />
               </div>
               <h4 className="text-xl font-semibold text-gray-900 mb-3">
@@ -79,7 +73,7 @@ export default function ContactPage() {
             </div>
 
             <div className="bg-white p-8 rounded-lg shadow-lg text-center hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Mail className="w-8 h-8 text-white" />
               </div>
               <h4 className="text-xl font-semibold text-gray-900 mb-3">
@@ -89,7 +83,7 @@ export default function ContactPage() {
             </div>
 
             <div className="bg-white p-8 rounded-lg shadow-lg text-center hover:shadow-xl transition-shadow">
-              <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="w-16 h-16 bg-gray-500 rounded-full flex items-center justify-center mx-auto mb-6">
                 <MapPin className="w-8 h-8 text-white" />
               </div>
               <h4 className="text-xl font-semibold text-gray-900 mb-3">

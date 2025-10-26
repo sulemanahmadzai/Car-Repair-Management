@@ -13,6 +13,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function ServicesSection() {
   const services = [
@@ -159,7 +160,7 @@ export default function ServicesSection() {
         </div>
 
         {/* Bottom CTA Section */}
-        <div className="bg-gradient-to-br from-primary to-orange-600 rounded-3xl p-12 text-center text-white relative overflow-hidden">
+        <div className="bg-gradient-to-b from-gray-700 to-gray-900 text-white rounded-3xl p-12 text-center  relative overflow-hidden">
           {/* Background Pattern */}
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
@@ -174,20 +175,13 @@ export default function ServicesSection() {
               to discuss your specific needs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Button
-                size="lg"
-                variant="secondary"
-                className="bg-white text-primary hover:bg-gray-100 px-8 py-6 text-lg font-semibold"
-              >
-                View All Services
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-primary px-8 py-6 text-lg font-semibold"
+              <Link
+                href="/contact"
+                className="border-2 border-white text-white hover:bg-white hover:text-primary px-4 py-3 text-lg font-semibold inline-block  "
               >
                 Contact Us
-              </Button>
+            
+              </Link>
             </div>
           </div>
         </div>

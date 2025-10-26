@@ -10,9 +10,6 @@ export default function AboutPage() {
 
   return (
     <div className="bg-white">
-      {/* Breadcrumb */}
-      <BreadcrumbSection title="About Us" items={breadcrumbItems} />
-
       <AboutSection />
       <StatsSection />
 
@@ -20,7 +17,7 @@ export default function AboutPage() {
       <section className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <span className="text-orange-500 font-semibold text-lg">
+            <span className="text-gray-500 font-semibold text-lg">
               Meet Our Expertise
             </span>
             <h2 className="text-4xl font-bold text-gray-900 mt-2">
@@ -49,17 +46,17 @@ export default function AboutPage() {
                 key={index}
                 className="bg-white rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow group"
               >
-                <div className="h-64 bg-gradient-to-br from-orange-100 to-orange-200 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-orange-500/20 to-transparent"></div>
+                <div className="h-64 bg-gradient-to-b from-gray-700 to-gray-900 text-white relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-gray-500/20 to-transparent"></div>
                   <div className="absolute bottom-4 left-4 right-4">
                     <div className="flex space-x-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-orange-600">
+                      <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-600">
                         <span className="text-white text-sm">f</span>
                       </div>
-                      <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-orange-600">
+                      <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-600">
                         <span className="text-white text-sm">t</span>
                       </div>
-                      <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-orange-600">
+                      <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-600">
                         <span className="text-white text-sm">i</span>
                       </div>
                     </div>
@@ -69,7 +66,7 @@ export default function AboutPage() {
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     {member.name}
                   </h3>
-                  <p className="text-orange-500 font-medium mb-1">
+                  <p className="text-gray-500 font-medium mb-1">
                     {member.role}
                   </p>
                   <p className="text-gray-600">{member.experience}</p>
@@ -79,8 +76,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
-      <ServicesSection />
 
       <TestimonialSection />
       <Footer />
