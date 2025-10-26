@@ -33,10 +33,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setMounted(true);
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
+    setLoading(false);
   }, []);
 
   if (!mounted) {
@@ -93,16 +90,7 @@ export default function DashboardPage() {
     }).format(value);
   };
 
-  const chartData = dashboardData?.chart || [
-    { date: "2024-01-01", revenue: 100 },
-    { date: "2024-01-02", revenue: 200 },
-    { date: "2024-01-03", revenue: 150 },
-    { date: "2024-01-04", revenue: 300 },
-    { date: "2024-01-05", revenue: 250 },
-  ];
-
-  console.log("Chart data:", chartData);
-  console.log("Dashboard data:", dashboardData);
+  const chartData = dashboardData?.chart || [];
 
   return (
     <div className="space-y-6">

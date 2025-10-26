@@ -33,10 +33,7 @@ export default function DashboardLayout({
       } catch (error) {
         console.error("Failed to fetch user data:", error);
       } finally {
-        // Simulate initial loading time like the main project
-        setTimeout(() => {
-          setIsInitialLoading(false);
-        }, 1000);
+        setIsInitialLoading(false);
       }
     };
 

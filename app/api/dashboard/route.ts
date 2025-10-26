@@ -28,7 +28,7 @@ export async function GET() {
       await Promise.all([
         // Total Revenue - sum of completed service records
         getCached(
-          CACHE_KEYS.CUSTOMER_BY_ID(teamId) + "_revenue",
+          `dashboard_revenue_${teamId}`,
           async () => {
             const result = await db
               .select({
@@ -43,7 +43,7 @@ export async function GET() {
               );
             return Number(result[0]?.total || 0);
           },
-          CACHE_TTL.SHORT
+          CACHE_TTL.MEDIUM
         ),
 
         // Total Customers
@@ -56,7 +56,7 @@ export async function GET() {
               .where(eq(customers.teamId, teamId));
             return Number(result[0]?.count || 0);
           },
-          CACHE_TTL.SHORT
+          CACHE_TTL.MEDIUM
         ),
 
         // Total Service Records
@@ -69,7 +69,7 @@ export async function GET() {
               .where(eq(serviceRecords.teamId, teamId));
             return Number(result[0]?.count || 0);
           },
-          CACHE_TTL.SHORT
+          CACHE_TTL.MEDIUM
         ),
 
         // Total Staff
@@ -82,7 +82,7 @@ export async function GET() {
               .where(eq(staff.teamId, teamId));
             return Number(result[0]?.count || 0);
           },
-          CACHE_TTL.SHORT
+          CACHE_TTL.MEDIUM
         ),
       ]);
 
@@ -123,7 +123,7 @@ export async function GET() {
 
         return days;
       },
-      CACHE_TTL.SHORT
+      CACHE_TTL.MEDIUM
     );
 
     // Get yearly breakup (last 12 months)
@@ -178,7 +178,7 @@ export async function GET() {
           );
         return Number(result[0]?.total || 0);
       },
-      CACHE_TTL.SHORT
+      CACHE_TTL.MEDIUM
     );
 
     return NextResponse.json({
