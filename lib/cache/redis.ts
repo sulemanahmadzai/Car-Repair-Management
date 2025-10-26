@@ -1,17 +1,77 @@
 import { Redis } from "@upstash/redis";
+import { createClient } from "redis";
 
-// Initialize Redis client
-// For development: use local Redis or Upstash free tier
-// For production: use Upstash Redis (serverless-compatible)
-export const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || "",
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
-});
+// Check if we're using local Redis or Upstash
+const isLocalRedis = process.env.REDIS_URL?.startsWith("redis://");
+
+// Initialize Redis client based on environment
+let redisClient: any;
+
+if (isLocalRedis) {
+  // Use local Redis client for development
+  redisClient = createClient({
+    url: process.env.REDIS_URL!,
+  });
+
+  // Connect to local Redis
+  redisClient.connect().catch(console.error);
+} else {
+  // Use Upstash Redis for production
+  redisClient = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL || "",
+    token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
+  });
+}
+
+// Create a unified Redis interface
+export const redis = {
+  async get<T>(key: string): Promise<T | null> {
+    if (isLocalRedis) {
+      const result = await redisClient.get(key);
+      return result ? JSON.parse(result) : null;
+    } else {
+      return (await redisClient.get(key)) as T | null;
+    }
+  },
+
+  async setex(key: string, ttl: number, value: any): Promise<void> {
+    if (isLocalRedis) {
+      await redisClient.setEx(key, ttl, JSON.stringify(value));
+    } else {
+      await redisClient.setex(key, ttl, value);
+    }
+  },
+
+  async del(...keys: string[]): Promise<void> {
+    if (isLocalRedis) {
+      await redisClient.del(keys);
+    } else {
+      await redisClient.del(...keys);
+    }
+  },
+
+  async keys(pattern: string): Promise<string[]> {
+    if (isLocalRedis) {
+      return await redisClient.keys(pattern);
+    } else {
+      return await redisClient.keys(pattern);
+    }
+  },
+
+  async flushdb(): Promise<void> {
+    if (isLocalRedis) {
+      await redisClient.flushDb();
+    } else {
+      await redisClient.flushdb();
+    }
+  },
+};
 
 // Check if Redis is configured
 export const isRedisConfigured = () => {
   return !!(
-    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+    process.env.REDIS_URL ||
+    (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
   );
 };
 

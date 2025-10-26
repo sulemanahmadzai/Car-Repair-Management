@@ -16,6 +16,7 @@ export default function BookingPage() {
         </div>
 
         {/* Booking Form */}
+        
         <BookingForm />
 
         {/* Additional Info */}

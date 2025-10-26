@@ -13,7 +13,7 @@ function question(query: string): Promise<string> {
     input: process.stdin,
     output: process.stdout,
   });
-
+  
   return new Promise((resolve) =>
     rl.question(query, (ans) => {
       rl.close();
@@ -242,3 +242,4 @@ async function main() {
 }
 
 main().catch(console.error);
+
