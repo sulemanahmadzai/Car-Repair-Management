@@ -100,7 +100,9 @@ export default function EditServiceRecordPage({
         const response = await fetch("/api/staff");
         if (response.ok) {
           const data = await response.json();
-          const activeStaff = data.filter(
+          // Handle both array response and paginated response
+          const staffArray = Array.isArray(data) ? data : data.items || [];
+          const activeStaff = staffArray.filter(
             (s: StaffMember) => s.status === "active"
           );
           setStaffList(activeStaff);

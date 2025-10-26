@@ -80,8 +80,10 @@ export default function AddServiceRecordPage() {
         const response = await fetch("/api/staff");
         if (response.ok) {
           const data = await response.json();
+          // Handle both array response and paginated response
+          const staffArray = Array.isArray(data) ? data : data.items || [];
           // Filter only active staff
-          const activeStaff = data.filter(
+          const activeStaff = staffArray.filter(
             (s: StaffMember) => s.status === "active"
           );
           setStaffList(activeStaff);
