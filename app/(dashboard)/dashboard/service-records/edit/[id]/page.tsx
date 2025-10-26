@@ -15,6 +15,7 @@ import {
   CheckCircle,
   AlertCircle,
   Upload,
+  MessageCircle,
 } from "lucide-react";
 import useSWR from "swr";
 import {
@@ -87,6 +88,7 @@ export default function EditServiceRecordPage({
   const [afterImages, setAfterImages] = useState<string[]>([]);
   const [assignedStaff, setAssignedStaff] = useState<number[]>([]);
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
+  const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
 
   const { data: record, error } = useSWR(
     `/api/service-records/${resolvedParams.id}`,
@@ -173,6 +175,14 @@ export default function EditServiceRecordPage({
     const timeoutId = setTimeout(fetchCustomerByRegistration, 500);
     return () => clearTimeout(timeoutId);
   }, [formData.vehicleReg]);
+
+  // Detect when status changes to "completed" and show WhatsApp option
+  useEffect(() => {
+    if (formData.status === "completed" && customerData && !showWhatsAppModal) {
+      // Show modal only once when status changes to completed
+      setShowWhatsAppModal(true);
+    }
+  }, [formData.status, customerData]);
 
   const handleImageUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -284,6 +294,18 @@ export default function EditServiceRecordPage({
 
   const removePart = (index: number) => {
     setParts(parts.filter((_, i) => i !== index));
+  };
+
+  // Handle WhatsApp click
+  const handleWhatsAppClick = (phone: string) => {
+    // Clean phone number - remove all non-digits
+    const cleanPhone = phone.replace(/\D/g, "");
+
+    // Open WhatsApp with the customer's number
+    window.open(`https://wa.me/${cleanPhone}`, "_blank");
+
+    // Close modal after opening WhatsApp
+    setShowWhatsAppModal(false);
   };
 
   if (!record) {
@@ -831,6 +853,77 @@ export default function EditServiceRecordPage({
           </CardContent>
         </Card>
       </form>
+
+      {/* WhatsApp Notification Modal */}
+      {showWhatsAppModal && customerData && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="max-w-md w-full mx-4">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle>Service Completed! 🎉</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Notify your customer
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <p className="text-sm font-medium text-green-900 mb-2">
+                  Customer Details:
+                </p>
+                <p className="text-green-800 font-semibold">
+                  {customerData.name}
+                </p>
+                <p className="text-green-700 text-sm">
+                  📱 {customerData.mobileNumber}
+                </p>
+              </div>
+              <p className="text-sm text-gray-600">
+                Click below to open WhatsApp and share the service completion
+                details with {customerData.name}.
+              </p>
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  onClick={() => handleWhatsAppClick(customerData.mobileNumber)}
+                  className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2" />
+                  Open WhatsApp
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setShowWhatsAppModal(false)}
+                  variant="outline"
+                >
+                  Maybe Later
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Floating WhatsApp Button for Completed Services */}
+      {formData.status === "completed" &&
+        customerData &&
+        !showWhatsAppModal && (
+          <div className="fixed bottom-6 right-6 z-40">
+            <Button
+              onClick={() => handleWhatsAppClick(customerData.mobileNumber)}
+              size="lg"
+              className="bg-green-500 hover:bg-green-600 text-white shadow-lg rounded-full w-14 h-14"
+              title="Notify customer via WhatsApp"
+            >
+              <MessageCircle className="w-6 h-6" />
+            </Button>
+          </div>
+        )}
     </div>
   );
 }

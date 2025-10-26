@@ -24,7 +24,6 @@ export function SimpleChart({ data }: SimpleChartProps) {
           margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
           barCategoryGap="20%"
           barGap={8}
-          borderRadius={6}
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis
